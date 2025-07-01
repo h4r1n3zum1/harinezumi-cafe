@@ -1111,12 +1111,14 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
+                // マグカップの真上に配置（中央揃え）
                 const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 100));
-                const y = Math.max(10, player.y - 80);
+                const y = Math.max(10, player.y - 90); // 少し上に調整
                 
                 bubble.style.left = x + 'px';
                 bubble.style.top = y + 'px';
             } else {
+                // フォールバック位置
                 bubble.style.left = '100px';
                 bubble.style.top = '350px';
             }
@@ -1151,12 +1153,14 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
-                const x = player.x - 12;
-                const y = player.y - 50;
+                // マグカップの真上中央に配置
+                const x = player.x - 12; // リアクションの中央揃え
+                const y = player.y - 60; // マグカップの上に配置
                 
                 reaction.style.left = x + 'px';
                 reaction.style.top = y + 'px';
             } else {
+                // フォールバック位置
                 reaction.style.left = '100px';
                 reaction.style.top = '300px';
             }
