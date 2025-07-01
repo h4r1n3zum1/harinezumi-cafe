@@ -1112,11 +1112,14 @@
             
             if (player) {
                 // マグカップの真上中央に正確に配置
-                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 50)); // 50px左にオフセット調整
-                const y = Math.max(10, player.y - 100); // さらに上に調整
+                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 85)); // 85px左にオフセット
+                const y = Math.max(10, player.y - 100);
                 
                 bubble.style.left = x + 'px';
                 bubble.style.top = y + 'px';
+                
+                // プレイヤーオブジェクトへの参照を保存
+                bubble.followPlayer = player;
             } else {
                 // フォールバック位置
                 bubble.style.left = '100px';
@@ -1125,6 +1128,23 @@
             
             gameArea.appendChild(bubble);
             state.speechBubbles.push(bubble);
+            
+            // 追従アニメーション用の更新関数
+            function updateBubblePosition() {
+                if (bubble.followPlayer && bubble.parentNode) {
+                    const newX = Math.max(10, Math.min(gameArea.clientWidth - 210, bubble.followPlayer.x - 85));
+                    const newY = Math.max(10, bubble.followPlayer.y - 100);
+                    
+                    bubble.style.left = newX + 'px';
+                    bubble.style.top = newY + 'px';
+                    
+                    // 次のフレームでも更新
+                    requestAnimationFrame(updateBubblePosition);
+                }
+            }
+            
+            // 追従開始
+            requestAnimationFrame(updateBubblePosition);
             
             setTimeout(() => {
                 bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
@@ -1154,11 +1174,14 @@
             
             if (player) {
                 // マグカップの真上中央に正確に配置
-                const x = player.x; // 中央揃えに調整
-                const y = player.y - 70; // さらに上に配置
+                const x = player.x - 12; // 中央揃え
+                const y = player.y - 70;
                 
                 reaction.style.left = x + 'px';
                 reaction.style.top = y + 'px';
+                
+                // プレイヤーオブジェクトへの参照を保存
+                reaction.followPlayer = player;
             } else {
                 // フォールバック位置
                 reaction.style.left = '100px';
@@ -1167,6 +1190,23 @@
             
             gameArea.appendChild(reaction);
             state.reactionAnimations.push(reaction);
+            
+            // 追従アニメーション用の更新関数（リアクション用）
+            function updateReactionPosition() {
+                if (reaction.followPlayer && reaction.parentNode) {
+                    const newX = reaction.followPlayer.x - 12;
+                    const newY = reaction.followPlayer.y - 70;
+                    
+                    reaction.style.left = newX + 'px';
+                    reaction.style.top = newY + 'px';
+                    
+                    // 次のフレームでも更新
+                    requestAnimationFrame(updateReactionPosition);
+                }
+            }
+            
+            // 追従開始
+            requestAnimationFrame(updateReactionPosition);
             
             setTimeout(() => {
                 if (reaction.parentNode) {
