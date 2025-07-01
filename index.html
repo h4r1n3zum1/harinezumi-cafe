@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ハリネズミカフェ - デバッグ版</title>
+  <title>ハリネズミカフェ バーチャルオフィス</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
@@ -16,7 +16,7 @@
     body {
       font-family: 'Noto Sans JP', sans-serif;
       overflow: hidden;
-      background: linear-gradient(135deg, #8B4513 0%, #D2691E  50%, #F4A460 100%);
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #F4A460 100%);
       height: 100vh;
     }
 
@@ -78,7 +78,6 @@
       border-color: #D2691E;
       box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
     }
-
     .reaction-buttons {
       display: flex;
       gap: 8px;
@@ -148,17 +147,25 @@
       font-weight: 700;
     }
 
-    /* 続く…（中盤でHTMLとJSへ） */
+    .name-input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #8B4513;
+      border-radius: 10px;
+      font-size: 18px;
+      margin-bottom: 30px;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .name-input:focus {
+      border-color: #D2691E;
+      outline: none;
+      box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+    }
   </style>
 </head>
 <body>
-  <!-- デバッグ情報 -->
-  <div class="debug-info" id="debug-info">
-    🔍 デバッグモード<br>
-    Firebase状態: <span id="firebase-status">接続中...</span><br>
-    オンライン人数: <span id="debug-user-count">0</span><br>
-    エラー: <span id="error-log">なし</span>
-  </div>
 
   <!-- 名前入力画面 -->
   <div class="screen" id="name-screen">
@@ -176,128 +183,187 @@
 
   <!-- メインゲーム画面 -->
   <div class="main-container" id="main-container" style="display: none;">
-    <div class="game-area" id="game-area">
-      <div class="ui-overlay">
-        <div class="title">🦔 Harinezumi Cafe</div>
-        <div class="subtitle">オンライン: <span id="user-count">0</span>人</div>
-      </div>
-    </div>
+    <div class="game-area" id="game-area"></div>
 
     <div class="chat-area">
       <div class="chat-header">💬 チャット</div>
-      <div class="chat-messages" id="chat-messages">
-        <div class="message">
-          <div class="message-author">システム</div>
-          <div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div>
-        </div>
-      </div>
+      <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input-area">
         <input type="text" id="chat-input" class="chat-input" placeholder="メッセージを入力..." maxlength="100">
         <div class="reaction-buttons">
-          <button class="reaction-btn" data-reaction="❤️">❤️</button>
-          <button class="reaction-btn" data-reaction="⭐">⭐</button>
-          <button class="reaction-btn" data-reaction="😊">😊</button>
-          <button class="reaction-btn" data-reaction="👍">👍</button>
-          <button class="reaction-btn" data-reaction="🍰">🍰</button>
-          <button class="reaction-btn" data-reaction="☕">☕</button>
-          <button class="reaction-btn" data-reaction="💭">💭</button>
-          <button class="reaction-btn" data-reaction="📚">📚</button>
+          <button class="reaction-btn" data-reaction=\"❤️\">❤️</button>
+          <button class="reaction-btn" data-reaction=\"⭐\">⭐</button>
+          <button class="reaction-btn" data-reaction=\"😊\">😊</button>
+          <button class="reaction-btn" data-reaction=\"👍\">👍</button>
         </div>
       </div>
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
   <script type="module">
-    // Firebase初期化・定数・状態変数・ユーティリティ関数…
-    // （あなたの現在のコードに含まれるすべての JavaScript 構造を保持しています）
+    import { initializeApp } from \"https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js\";
+    import { getDatabase, ref, set, onValue } from \"https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js\";
 
-    // ここに次の update 関数などが続きます →
-    // ゲーム初期化
+    const firebaseConfig = {
+      // あなたのFirebase設定情報に置き換えてください
+      apiKey: \"YOUR_API_KEY\",
+      authDomain: \"YOUR_PROJECT.firebaseapp.com\",
+      databaseURL: \"https://YOUR_PROJECT.firebaseio.com\",
+      projectId: \"YOUR_PROJECT_ID\",
+      storageBucket: \"YOUR_PROJECT.appspot.com\",
+      messagingSenderId: \"YOUR_SENDER_ID\",
+      appId: \"YOUR_APP_ID\"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const state = {
+      userName: \"\",
+      selectedMugColor: \"#8B4513\",
+      playerId: \"id-\" + Math.random().toString(36).substr(2, 9),
+      deviceId: navigator.userAgent,
+      isFirebaseReady: true
+    };
+
+    let player;
+    let cursors;
+    let game;
+
+    document.getElementById(\"name-next-btn\").addEventListener(\"click\", () => {
+      const name = document.getElementById(\"name-input\").value.trim();
+      if (!name) return;
+      state.userName = name;
+      document.getElementById(\"name-screen\").style.display = \"none\";
+      document.getElementById(\"mug-screen\").style.display = \"block\";
+      loadMugs();
+    });
+
+    function loadMugs() {
+      const grid = document.getElementById(\"character-grid\");
+      const colors = [\"#D2691E\", \"#8B4513\", \"#F4A460\", \"#CD853F\"];
+      colors.forEach(color => {
+        const div = document.createElement(\"div\");
+        div.className = \"character-option\";
+        div.innerHTML = `<div style=\"width:50px;height:50px;background:${color};border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;border:3px solid #8B4513;\"></div>`;
+        div.onclick = () => {
+          state.selectedMugColor = color;
+          document.querySelectorAll(\".character-option\").forEach(el => el.classList.remove(\"selected\"));
+          div.classList.add(\"selected\");
+          document.getElementById(\"start-btn\").disabled = false;
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    document.getElementById(\"start-btn\").addEventListener(\"click\", () => {
+      document.getElementById(\"mug-screen\").style.display = \"none\";
+      document.getElementById(\"main-container\").style.display = \"flex\";
+      initializeGame();
+    });
+
     function initializeGame() {
-      const gameArea = document.getElementById('game-area');
-      const gameWidth = gameArea.clientWidth;
-      const gameHeight = gameArea.clientHeight;
-
-      const config = {
+      const gameArea = document.getElementById(\"game-area\");
+      game = new Phaser.Game({
         type: Phaser.AUTO,
-        width: gameWidth,
-        height: gameHeight,
-        backgroundColor: '#F5DEB3',
-        parent: 'game-area',
-        scene: {
-          preload,
-          create,
-          update
-        }
-      };
+        width: gameArea.clientWidth,
+        height: gameArea.clientHeight,
+        backgroundColor: \"#F5DEB3\",
+        parent: \"game-area\",
+        scene: { preload, create, update }
+      });
+    }
+    function preload() {
+      const g = this.add.graphics();
+      const color = parseInt(state.selectedMugColor.replace(\"#\", \"0x\"), 16);
+      g.fillStyle(color, 1);
+      g.fillRoundedRect(0, 0, 40, 50, 20);
+      g.generateTexture(\"player-mug\", 40, 50);
+      g.destroy();
+    }
 
-      let player;
-      let cursors;
+    function create() {
+      player = this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2, \"player-mug\").setDepth(10);
+      cursors = this.input.keyboard.createCursorKeys();
+    }
 
-      function preload() {
-        this.load.image('player', 'https://dummyimage.com/60x80/' + state.selectedMugColor.replace('#', '') + '/fff&text=☕');
+    function update() {
+      const speed = 3;
+      let moved = false;
+      const gameWidth = this.cameras.main.width;
+      const gameHeight = this.cameras.main.height;
+
+      const margin = 50;
+      const minX = margin;
+      const maxX = gameWidth - margin;
+      const minY = margin;
+      const maxY = gameHeight - margin;
+
+      if (cursors.left.isDown) {
+        player.x -= speed;
+        moved = true;
+      }
+      if (cursors.right.isDown) {
+        player.x += speed;
+        moved = true;
+      }
+      if (cursors.up.isDown) {
+        player.y -= speed;
+        moved = true;
+      }
+      if (cursors.down.isDown) {
+        player.y += speed;
+        moved = true;
       }
 
-      function create() {
-        this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
+      // ✅ 画面外に出ないよう制限
+      player.x = Phaser.Math.Clamp(player.x, minX, maxX);
+      player.y = Phaser.Math.Clamp(player.y, minY, maxY);
 
-        player = this.add.sprite(gameWidth / 2, gameHeight / 2, 'player');
-        player.setDepth(10);
-
-        cursors = this.input.keyboard.createCursorKeys();
-      }
-
-      function update() {
-        const speed = 3;
-        let moved = false;
-
-        const margin = 50;
-        const minX = margin;
-        const maxX = this.cameras.main.width - margin;
-        const minY = margin;
-        const maxY = this.cameras.main.height - margin;
-
-        if (cursors.left.isDown) {
-          player.x -= speed;
-          moved = true;
-        }
-        if (cursors.right.isDown) {
-          player.x += speed;
-          moved = true;
-        }
-        if (cursors.up.isDown) {
-          player.y -= speed;
-          moved = true;
-        }
-        if (cursors.down.isDown) {
-          player.y += speed;
-          moved = true;
-        }
-
-        // 🎯 画面外に出ないように制限（ここが修正ポイント！）
-        player.x = Phaser.Math.Clamp(player.x, minX, maxX);
-        player.y = Phaser.Math.Clamp(player.y, minY, maxY);
-
-        if (moved && state.isFirebaseReady) {
-          const playerRef = ref(database, `players/${state.playerId}`);
-          set(playerRef, {
-            x: player.x,
-            y: player.y,
-            mugColor: state.selectedMugColor,
-            deviceId: state.deviceId,
-            userName: state.userName,
-            timestamp: Date.now(),
-            lastUpdate: Date.now()
-          });
-        }
+      if (moved && state.isFirebaseReady) {
+        const playerRef = ref(database, `players/${state.playerId}`);
+        set(playerRef, {
+          x: player.x,
+          y: player.y,
+          mugColor: state.selectedMugColor,
+          deviceId: state.deviceId,
+          userName: state.userName,
+          timestamp: Date.now(),
+          lastUpdate: Date.now()
+        });
       }
     }
 
-    // その他のイベント登録や初期実行処理（省略せず記載可）
+    // チャット送信処理
+    const chatInput = document.getElementById(\"chat-input\");
+    const chatMessages = document.getElementById(\"chat-messages\");
+    chatInput.addEventListener(\"keypress\", e => {
+      if (e.key === \"Enter\") {
+        const text = chatInput.value.trim();
+        if (text === \"\") return;
+        const div = document.createElement(\"div\");
+        div.className = \"message\";
+        div.innerHTML = `<div class=\"message-author\">🦔 ${state.userName}</div><div class=\"message-text\">${text}</div>`;
+        chatMessages.appendChild(div);
+        chatInput.value = \"\";
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
 
-    window.addEventListener('load', () => {
-      // 必要に応じて：showNameScreen();
+    // リアクション処理（ローカル表示）
+    document.querySelectorAll(\".reaction-btn\").forEach(btn => {
+      btn.addEventListener(\"click\", () => {
+        const emoji = btn.dataset.reaction;
+        const el = document.createElement(\"div\");
+        el.textContent = emoji;
+        el.style.position = \"absolute\";
+        el.style.left = `${player.x}px`;
+        el.style.top = `${player.y - 60}px`;
+        el.style.fontSize = \"24px\";
+        el.style.zIndex = \"1000\";
+        document.getElementById(\"game-area\").appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+      });
     });
   </script>
 </body>
