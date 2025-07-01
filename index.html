@@ -1,370 +1,1354 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ハリネズミカフェ バーチャルオフィス</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      overflow: hidden;
-      background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #F4A460 100%);
-      height: 100vh;
-    }
-
-    .main-container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    .game-area {
-      flex: 1;
-      position: relative;
-      background: linear-gradient(180deg, #F5DEB3 0%, #DEB887 30%, #8B4513 100%);
-    }
-
-    .chat-area {
-      width: 400px;
-      background: rgba(255, 255, 255, 0.95);
-      border-left: 3px solid #8B4513;
-      display: flex;
-      flex-direction: column;
-      backdrop-filter: blur(10px);
-    }
-
-    .chat-header {
-      background: #8B4513;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    .chat-input-area {
-      padding: 15px;
-      background: rgba(245, 222, 179, 0.9);
-      border-top: 2px solid #8B4513;
-    }
-
-    .chat-input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #8B4513;
-      border-radius: 25px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      margin-bottom: 10px;
-    }
-
-    .chat-input:focus {
-      border-color: #D2691E;
-      box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
-    }
-    .reaction-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .reaction-btn {
-      width: 40px;
-      height: 40px;
-      border: 2px solid #8B4513;
-      border-radius: 50%;
-      background: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      transition: all 0.2s ease;
-    }
-
-    .reaction-btn:hover {
-      transform: scale(1.1);
-      background: rgba(139, 69, 19, 0.1);
-    }
-
-    .message {
-      margin-bottom: 10px;
-      padding: 8px 12px;
-      background: rgba(139, 69, 19, 0.1);
-      border-radius: 15px;
-      border-left: 4px solid #8B4513;
-    }
-
-    .message-author {
-      font-weight: 500;
-      color: #8B4513;
-      font-size: 12px;
-      margin-bottom: 2px;
-    }
-
-    .message-text {
-      color: #333;
-      font-size: 14px;
-    }
-
-    .screen {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.95);
-      border: 3px solid #8B4513;
-      border-radius: 15px;
-      padding: 40px;
-      z-index: 3000;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(10px);
-      max-width: 500px;
-      text-align: center;
-    }
-
-    .screen h2 {
-      color: #8B4513;
-      font-size: 28px;
-      margin-bottom: 30px;
-      font-weight: 700;
-    }
-
-    .name-input {
-      width: 100%;
-      padding: 15px;
-      border: 2px solid #8B4513;
-      border-radius: 10px;
-      font-size: 18px;
-      margin-bottom: 30px;
-      font-family: inherit;
-      text-align: center;
-    }
-
-    .name-input:focus {
-      border-color: #D2691E;
-      outline: none;
-      box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハリネズミカフェ バーチャルオフィス</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E  50%, #F4A460 100%);
+            height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .game-area {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(180deg, #F5DEB3 0%, #DEB887 30%, #8B4513 100%);
+        }
+        
+        .chat-area {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 3px solid #8B4513;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+        
+        .chat-header {
+            background: #8B4513;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            background: rgba(245, 222, 179, 0.9);
+            border-top: 2px solid #8B4513;
+        }
+        
+        .chat-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #8B4513;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        
+        .chat-input:focus {
+            border-color: #D2691E;
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .reaction-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .reaction-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #8B4513;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        
+        .reaction-btn:hover {
+            transform: scale(1.1);
+            background: rgba(139, 69, 19, 0.1);
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(139, 69, 19, 0.1);
+            border-radius: 15px;
+            border-left: 4px solid #8B4513;
+        }
+        
+        .message-author {
+            font-weight: 500;
+            color: #8B4513;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .message-text {
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #8B4513;
+            border-radius: 15px;
+            padding: 40px;
+            z-index: 3000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .screen h2 {
+            color: #8B4513;
+            font-size: 28px;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+        
+        .name-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #8B4513;
+            border-radius: 10px;
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-family: inherit;
+            text-align: center;
+        }
+        
+        .name-input:focus {
+            border-color: #D2691E;
+            outline: none;
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+        }
+        
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .character-option {
+            width: 90px;
+            height: 90px;
+            border: 3px solid #DDD;
+            border-radius: 15px;
+            background: #FFF;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .character-option:hover {
+            border-color: #D2691E;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(210, 105, 30, 0.3);
+        }
+        
+        .character-option.selected {
+            border-color: #8B4513;
+            background: rgba(139, 69, 19, 0.1);
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(139, 69, 19, 0.4);
+        }
+        
+        .big-button {
+            width: 100%;
+            padding: 20px;
+            background: #8B4513;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .big-button:hover {
+            background: #A0522D;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .big-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8B4513;
+            color: #8B4513;
+            padding: 15px 20px;
+            border-radius: 15px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ui-overlay .title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .ui-overlay .subtitle {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #8B4513;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #333;
+            z-index: 500;
+            backdrop-filter: blur(5px);
+            animation: bubbleFloat 0.5s ease-out;
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #8B4513;
+        }
+        
+        .reaction-animation {
+            position: absolute;
+            font-size: 24px;
+            z-index: 600;
+            animation: reactionFloat 3s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes bubbleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes bubbleFadeOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.8);
+            }
+        }
+        
+        @keyframes reactionFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-30px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(0.8);
+            }
+        }
+    </style>
 </head>
 <body>
-
-  <!-- 名前入力画面 -->
-  <div class="screen" id="name-screen">
-    <h2>🦔 ハリネズミカフェへようこそ</h2>
-    <input type="text" id="name-input" class="name-input" placeholder="お名前を入力してください" maxlength="20">
-    <button class="big-button" id="name-next-btn">次へ</button>
-  </div>
-
-  <!-- マグカップ選択画面 -->
-  <div class="screen" id="mug-screen" style="display: none;">
-    <h2>☕ マグカップを選んでください</h2>
-    <div class="character-grid" id="character-grid"></div>
-    <button class="big-button" id="start-btn" disabled>カフェに入る</button>
-  </div>
-
-  <!-- メインゲーム画面 -->
-  <div class="main-container" id="main-container" style="display: none;">
-    <div class="game-area" id="game-area"></div>
-
-    <div class="chat-area">
-      <div class="chat-header">💬 チャット</div>
-      <div class="chat-messages" id="chat-messages"></div>
-      <div class="chat-input-area">
-        <input type="text" id="chat-input" class="chat-input" placeholder="メッセージを入力..." maxlength="100">
-        <div class="reaction-buttons">
-          <button class="reaction-btn" data-reaction=\"❤️\">❤️</button>
-          <button class="reaction-btn" data-reaction=\"⭐\">⭐</button>
-          <button class="reaction-btn" data-reaction=\"😊\">😊</button>
-          <button class="reaction-btn" data-reaction=\"👍\">👍</button>
-        </div>
-      </div>
+    <!-- 名前入力画面 -->
+    <div class="screen" id="name-screen">
+        <h2>🦔 ハリネズミカフェへようこそ</h2>
+        <input type="text" id="name-input" class="name-input" placeholder="お名前を入力してください" maxlength="20">
+        <button class="big-button" id="name-next-btn">次へ</button>
     </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-  <script type="module">
-    import { initializeApp } from \"https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js\";
-    import { getDatabase, ref, set, onValue } from \"https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js\";
-
-    const firebaseConfig = {
-      // あなたのFirebase設定情報に置き換えてください
-      apiKey: \"YOUR_API_KEY\",
-      authDomain: \"YOUR_PROJECT.firebaseapp.com\",
-      databaseURL: \"https://YOUR_PROJECT.firebaseio.com\",
-      projectId: \"YOUR_PROJECT_ID\",
-      storageBucket: \"YOUR_PROJECT.appspot.com\",
-      messagingSenderId: \"YOUR_SENDER_ID\",
-      appId: \"YOUR_APP_ID\"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    const state = {
-      userName: \"\",
-      selectedMugColor: \"#8B4513\",
-      playerId: \"id-\" + Math.random().toString(36).substr(2, 9),
-      deviceId: navigator.userAgent,
-      isFirebaseReady: true
-    };
-
-    let player;
-    let cursors;
-    let game;
-
-    document.getElementById(\"name-next-btn\").addEventListener(\"click\", () => {
-      const name = document.getElementById(\"name-input\").value.trim();
-      if (!name) return;
-      state.userName = name;
-      document.getElementById(\"name-screen\").style.display = \"none\";
-      document.getElementById(\"mug-screen\").style.display = \"block\";
-      loadMugs();
-    });
-
-    function loadMugs() {
-      const grid = document.getElementById(\"character-grid\");
-      const colors = [\"#D2691E\", \"#8B4513\", \"#F4A460\", \"#CD853F\"];
-      colors.forEach(color => {
-        const div = document.createElement(\"div\");
-        div.className = \"character-option\";
-        div.innerHTML = `<div style=\"width:50px;height:50px;background:${color};border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;border:3px solid #8B4513;\"></div>`;
-        div.onclick = () => {
-          state.selectedMugColor = color;
-          document.querySelectorAll(\".character-option\").forEach(el => el.classList.remove(\"selected\"));
-          div.classList.add(\"selected\");
-          document.getElementById(\"start-btn\").disabled = false;
+    
+    <!-- マグカップ選択画面 -->
+    <div class="screen" id="mug-screen" style="display: none;">
+        <h2>☕ マグカップを選んでください</h2>
+        <div class="character-grid" id="character-grid"></div>
+        <button class="big-button" id="start-btn" disabled>カフェに入る</button>
+    </div>
+    
+    <!-- メインゲーム画面 -->
+    <div class="main-container" id="main-container" style="display: none;">
+        <div class="game-area" id="game-area">
+            <div class="ui-overlay">
+                <div class="title">🦔 Harinezumi Cafe</div>
+                <div class="subtitle">オンライン: <span id="user-count">0</span>人</div>
+            </div>
+        </div>
+        
+        <div class="chat-area">
+            <div class="chat-header">💬 チャット</div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message">
+                    <div class="message-author">システム</div>
+                    <div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" class="chat-input" placeholder="メッセージを入力..." maxlength="100">
+                <div class="reaction-buttons">
+                    <button class="reaction-btn" data-reaction="❤️">❤️</button>
+                    <button class="reaction-btn" data-reaction="⭐">⭐</button>
+                    <button class="reaction-btn" data-reaction="😊">😊</button>
+                    <button class="reaction-btn" data-reaction="👍">👍</button>
+                    <button class="reaction-btn" data-reaction="🍰">🍰</button>
+                    <button class="reaction-btn" data-reaction="☕">☕</button>
+                    <button class="reaction-btn" data-reaction="💭">💭</button>
+                    <button class="reaction-btn" data-reaction="📚">📚</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        
+        // 🔥 Firebase設定（修正版）
+        const firebaseConfig = {
+            apiKey: "AIzaSyCW5Z22SV6NE41EEg_KyTzabfySNM3smEk",
+            authDomain: "harinezumi-cafe.firebaseapp.com",
+            databaseURL: "https://harinezumi-cafe-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "harinezumi-cafe",
+            storageBucket: "harinezumi-cafe.firebasestorage.app",
+            messagingSenderId: "102145355730",
+            appId: "1:102145355730:web:b2d3552560b00ebcb860cb"
         };
-        grid.appendChild(div);
-      });
-    }
 
-    document.getElementById(\"start-btn\").addEventListener(\"click\", () => {
-      document.getElementById(\"mug-screen\").style.display = \"none\";
-      document.getElementById(\"main-container\").style.display = \"flex\";
-      initializeGame();
-    });
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // グローバル変数
+        const COMPANY_CODE = "HarinezumiCafe";
+        const MUG_COLORS = [
+            { color: '#D2691E', name: 'キャラメル' },
+            { color: '#8B4513', name: 'エスプレッソ' },
+            { color: '#F4A460', name: 'ラテ' },
+            { color: '#CD853F', name: 'モカ' },
+            { color: '#DEB887', name: 'カプチーノ' },
+            { color: '#BC8F8F', name: 'ココア' },
+            { color: '#A0522D', name: 'チャイ' },
+            { color: '#DAA520', name: 'ハニー' },
+            { color: '#B22222', name: 'ベリー' },
+            { color: '#2E8B57', name: 'マッチャ' },
+            { color: '#4682B4', name: 'ブルー' },
+            { color: '#9370DB', name: 'ラベンダー' }
+        ];
+        
+        // 状態管理
+        let state = {
+            selectedMugColor: '',
+            userName: '',
+            gameInstance: null,
+            playerId: null,
+            deviceId: null,
+            gameScene: null,
+            speechBubbles: [],
+            reactionAnimations: [],
+            isInitialized: false,
+            currentStep: 'name',
+            sessionStartTime: Date.now(),
+            isFirebaseReady: false
+        };
 
-    function initializeGame() {
-      const gameArea = document.getElementById(\"game-area\");
-      game = new Phaser.Game({
-        type: Phaser.AUTO,
-        width: gameArea.clientWidth,
-        height: gameArea.clientHeight,
-        backgroundColor: \"#F5DEB3\",
-        parent: \"game-area\",
-        scene: { preload, create, update }
-      });
-    }
-    function preload() {
-      const g = this.add.graphics();
-      const color = parseInt(state.selectedMugColor.replace(\"#\", \"0x\"), 16);
-      g.fillStyle(color, 1);
-      g.fillRoundedRect(0, 0, 40, 50, 20);
-      g.generateTexture(\"player-mug\", 40, 50);
-      g.destroy();
-    }
+        // DOM要素取得
+        const elements = {
+            get nameScreen() { return document.getElementById('name-screen'); },
+            get mugScreen() { return document.getElementById('mug-screen'); },
+            get mainContainer() { return document.getElementById('main-container'); },
+            get nameInput() { return document.getElementById('name-input'); },
+            get nameNextBtn() { return document.getElementById('name-next-btn'); },
+            get characterGrid() { return document.getElementById('character-grid'); },
+            get startBtn() { return document.getElementById('start-btn'); },
+            get gameArea() { return document.getElementById('game-area'); },
+            get chatInput() { return document.getElementById('chat-input'); },
+            get chatMessages() { return document.getElementById('chat-messages'); },
+            get userCount() { return document.getElementById('user-count'); },
+            get reactionButtons() { return document.querySelector('.reaction-buttons'); }
+        };
 
-    function create() {
-      player = this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height / 2, \"player-mug\").setDepth(10);
-      cursors = this.input.keyboard.createCursorKeys();
-    }
+        // ユーティリティ関数
+        function generateDeviceId() {
+            let id = localStorage.getItem('device-id');
+            if (!id) {
+                id = 'device_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('device-id', id);
+            }
+            return id;
+        }
 
-    function update() {
-      const speed = 3;
-      let moved = false;
-      const gameWidth = this.cameras.main.width;
-      const gameHeight = this.cameras.main.height;
+        function generateSessionId() {
+            return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
 
-      const margin = 50;
-      const minX = margin;
-      const maxX = gameWidth - margin;
-      const minY = margin;
-      const maxY = gameHeight - margin;
+        function createMugHTML(color) {
+            return `
+                <div style="
+                    width: 50px;
+                    height: 50px;
+                    background: ${color};
+                    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+                    border: 3px solid #8B4513;
+                    position: relative;
+                    box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+                ">
+                    <div style="
+                        position: absolute;
+                        right: -10px;
+                        top: 10px;
+                        width: 15px;
+                        height: 25px;
+                        border: 3px solid #8B4513;
+                        border-left: none;
+                        border-radius: 0 50% 50% 0;
+                    "></div>
+                </div>
+            `;
+        }
 
-      if (cursors.left.isDown) {
-        player.x -= speed;
-        moved = true;
-      }
-      if (cursors.right.isDown) {
-        player.x += speed;
-        moved = true;
-      }
-      if (cursors.up.isDown) {
-        player.y -= speed;
-        moved = true;
-      }
-      if (cursors.down.isDown) {
-        player.y += speed;
-        moved = true;
-      }
+        // 会社コードチェック
+        function checkCompanyAccess() {
+            let entryCode = localStorage.getItem('company-entry-code');
+            
+            if (!entryCode || entryCode !== COMPANY_CODE) {
+                entryCode = prompt('🔐 会社アクセスコードを入力してください:\n\n※このアプリは社内利用限定です');
+                
+                if (!entryCode || entryCode !== COMPANY_CODE) {
+                    alert('❌ アクセスが許可されていません。\n正しいアクセスコードを入力してください。');
+                    return false;
+                }
+                
+                localStorage.setItem('company-entry-code', entryCode);
+                alert('✅ アクセスが承認されました。ハリネズミカフェへようこそ！');
+            }
+            
+            return true;
+        }
 
-      // ✅ 画面外に出ないよう制限
-      player.x = Phaser.Math.Clamp(player.x, minX, maxX);
-      player.y = Phaser.Math.Clamp(player.y, minY, maxY);
+        // 画面制御
+        function showNameScreen() {
+            if (elements.nameScreen) elements.nameScreen.style.display = 'block';
+            if (elements.mugScreen) elements.mugScreen.style.display = 'none';
+            if (elements.mainContainer) elements.mainContainer.style.display = 'none';
+            
+            setTimeout(() => {
+                if (elements.nameInput) elements.nameInput.focus();
+            }, 200);
+        }
 
-      if (moved && state.isFirebaseReady) {
-        const playerRef = ref(database, `players/${state.playerId}`);
-        set(playerRef, {
-          x: player.x,
-          y: player.y,
-          mugColor: state.selectedMugColor,
-          deviceId: state.deviceId,
-          userName: state.userName,
-          timestamp: Date.now(),
-          lastUpdate: Date.now()
-        });
-      }
-    }
+        function showMugScreen() {
+            if (elements.nameScreen) elements.nameScreen.style.display = 'none';
+            if (elements.mugScreen) elements.mugScreen.style.display = 'block';
+            if (elements.mainContainer) elements.mainContainer.style.display = 'none';
+            
+            setTimeout(() => {
+                generateMugOptions();
+            }, 100);
+        }
 
-    // チャット送信処理
-    const chatInput = document.getElementById(\"chat-input\");
-    const chatMessages = document.getElementById(\"chat-messages\");
-    chatInput.addEventListener(\"keypress\", e => {
-      if (e.key === \"Enter\") {
-        const text = chatInput.value.trim();
-        if (text === \"\") return;
-        const div = document.createElement(\"div\");
-        div.className = \"message\";
-        div.innerHTML = `<div class=\"message-author\">🦔 ${state.userName}</div><div class=\"message-text\">${text}</div>`;
-        chatMessages.appendChild(div);
-        chatInput.value = \"\";
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    });
+        function showGameScreen() {
+            if (elements.nameScreen) elements.nameScreen.style.display = 'none';
+            if (elements.mugScreen) elements.mugScreen.style.display = 'none';
+            if (elements.mainContainer) elements.mainContainer.style.display = 'flex';
+            
+            state.sessionStartTime = Date.now();
+            
+            setTimeout(() => {
+                initializeGame();
+                setTimeout(() => {
+                    setupChat();
+                }, 500);
+            }, 100);
+        }
 
-    // リアクション処理（ローカル表示）
-    document.querySelectorAll(\".reaction-btn\").forEach(btn => {
-      btn.addEventListener(\"click\", () => {
-        const emoji = btn.dataset.reaction;
-        const el = document.createElement(\"div\");
-        el.textContent = emoji;
-        el.style.position = \"absolute\";
-        el.style.left = `${player.x}px`;
-        el.style.top = `${player.y - 60}px`;
-        el.style.fontSize = \"24px\";
-        el.style.zIndex = \"1000\";
-        document.getElementById(\"game-area\").appendChild(el);
-        setTimeout(() => el.remove(), 3000);
-      });
-    });
-  </script>
+        function goToMugSelection() {
+            const nameInput = elements.nameInput;
+            state.userName = nameInput.value.trim();
+            
+            if (!state.userName) {
+                alert('❌ お名前を入力してください');
+                nameInput.focus();
+                return;
+            }
+            
+            state.currentStep = 'mug';
+            showMugScreen();
+        }
+
+        function generateMugOptions() {
+            const grid = elements.characterGrid;
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            
+            MUG_COLORS.forEach((mug, index) => {
+                const option = document.createElement('div');
+                option.className = 'character-option';
+                option.innerHTML = createMugHTML(mug.color);
+                option.addEventListener('click', () => selectMug(mug.color, option));
+                grid.appendChild(option);
+            });
+
+            state.selectedMugColor = '';
+            updateStartButton();
+        }
+
+        function selectMug(color, element) {
+            state.selectedMugColor = color;
+            
+            const allOptions = elements.characterGrid.querySelectorAll('.character-option');
+            allOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            element.classList.add('selected');
+            updateStartButton();
+        }
+
+        function updateStartButton() {
+            const startBtn = elements.startBtn;
+            if (!startBtn) return;
+            startBtn.disabled = !state.selectedMugColor;
+        }
+
+        function updateNameButton() {
+            const nameInput = elements.nameInput;
+            const nameNextBtn = elements.nameNextBtn;
+            
+            if (!nameInput || !nameNextBtn) return;
+            nameNextBtn.disabled = !nameInput.value.trim();
+        }
+
+        function startGame() {
+            if (!state.selectedMugColor) {
+                alert('❌ マグカップを選択してください');
+                return;
+            }
+            
+            state.deviceId = generateDeviceId();
+            state.playerId = generateSessionId(); // 新しいセッションIDを毎回生成
+            state.currentStep = 'game';
+            showGameScreen();
+        }
+
+        // Phaserゲーム初期化
+        function initializeGame() {
+            const gameArea = elements.gameArea;
+            const gameWidth = gameArea.clientWidth;
+            const gameHeight = gameArea.clientHeight;
+            
+            const config = {
+                type: Phaser.AUTO,
+                width: gameWidth,
+                height: gameHeight,
+                backgroundColor: '#F5DEB3',
+                parent: 'game-area',
+                scale: {
+                    mode: Phaser.Scale.RESIZE,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                },
+                scene: {
+                    preload: preload,
+                    create: create,
+                    update: update
+                }
+            };
+
+            let player;
+            let cursors;
+            let otherPlayers = {};
+
+            function preload() {
+                state.gameScene = this;
+                createAssets.call(this);
+            }
+            
+            function createAssets() {
+                // カフェテーブル
+                const tableGraphics = this.add.graphics();
+                tableGraphics.fillStyle(0x8B4513);
+                tableGraphics.fillRoundedRect(0, 0, 800, 120, 15);
+                tableGraphics.fillStyle(0xA0522D);
+                tableGraphics.fillRoundedRect(10, 10, 780, 100, 10);
+                tableGraphics.fillStyle(0x654321);
+                for (let i = 0; i < 8; i++) {
+                    tableGraphics.fillRect(20, 20 + i * 10, 760, 4);
+                }
+                tableGraphics.generateTexture('cafe-table', 800, 120);
+                tableGraphics.destroy();
+
+                // マグカップテクスチャ（全色）
+                MUG_COLORS.forEach((mug, index) => {
+                    this.createMugTexture(mug.color, `mug-${index}`);
+                });
+                this.createMugTexture(state.selectedMugColor, 'player-mug');
+            }
+            
+            Phaser.Scene.prototype.createMugTexture = function(color, key) {
+                const tempGraphics = this.add.graphics();
+                const colorInt = parseInt(color.replace('#', '0x'));
+                
+                tempGraphics.fillStyle(colorInt);
+                tempGraphics.fillRoundedRect(0, 20, 40, 50, 20);
+                tempGraphics.lineStyle(4, 0x8B4513);
+                tempGraphics.strokeCircle(45, 35, 12);
+                tempGraphics.fillStyle(0x8B4513);
+                tempGraphics.fillEllipse(20, 25, 40, 10);
+                tempGraphics.fillStyle(0x3E2723);
+                tempGraphics.fillEllipse(20, 25, 35, 8);
+                tempGraphics.fillStyle(0xFFFFFF);
+                tempGraphics.fillCircle(15, 15, 2);
+                tempGraphics.fillCircle(20, 10, 2);
+                tempGraphics.fillCircle(25, 15, 2);
+                tempGraphics.fillCircle(30, 8, 2);
+                
+                tempGraphics.generateTexture(key, 60, 80);
+                tempGraphics.destroy();
+            };
+
+            function create() {
+                const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
+                
+                // 背景作成
+                this.createCafeBackground(gameWidth, gameHeight);
+                
+                // テーブル配置
+                const tableY = gameHeight - 120;
+                const table = this.add.image(gameWidth / 2, tableY, 'cafe-table');
+                table.setDisplaySize(gameWidth - 40, 120);
+                table.setDepth(1);
+                
+                // プレイヤー作成
+                const startX = 100 + Math.random() * 200; // ランダムな開始位置
+                const playerY = tableY - 40;
+                
+                player = this.add.sprite(startX, playerY, 'player-mug');
+                player.setScale(1.0);
+                player.playerId = state.playerId;
+                player.setDepth(200);
+                
+                cursors = this.input.keyboard.createCursorKeys();
+                this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
+                
+                setupFirebaseConnection();
+            }
+
+            Phaser.Scene.prototype.createCafeBackground = function(width, height) {
+                // シンプルな背景
+                const bg = this.add.graphics();
+                bg.fillGradientStyle(0xFDF5E6, 0xF5DEB3, 0xDEB887, 0xD2B48C, 1);
+                bg.fillRect(0, 0, width, height);
+                bg.setDepth(-100);
+                
+                // 木目調の床
+                for (let i = 0; i < width; i += 40) {
+                    const floorPlank = this.add.graphics();
+                    floorPlank.fillStyle(0xCD853F);
+                    floorPlank.fillRect(i, height - 150, 38, 150);
+                    floorPlank.fillRect(i, height - 150, 2, 150);
+                    floorPlank.fillRect(i + 36, height - 150, 2, 150);
+                    floorPlank.setDepth(-90);
+                }
+                
+                // レトロな壁紙
+                for (let x = 0; x < width; x += 60) {
+                    for (let y = 0; y < height - 150; y += 80) {
+                        const wallpaper = this.add.graphics();
+                        wallpaper.fillStyle(0xF5DEB3);
+                        wallpaper.fillRect(x, y, 60, 80);
+                        wallpaper.lineStyle(2, 0xDEB887);
+                        wallpaper.strokeRect(x + 5, y + 5, 50, 70);
+                        wallpaper.fillStyle(0xD2691E);
+                        wallpaper.fillCircle(x + 30, y + 40, 8);
+                        wallpaper.setDepth(-95);
+                    }
+                }
+                
+                // 本棚（左右）
+                this.createBookshelf(50, 50, 120, height - 250);
+                this.createBookshelf(width - 170, 50, 120, height - 250);
+                
+                // 中央の日付表示
+                const today = new Date();
+                const dateStr = today.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                
+                const dateX = width / 2;
+                const dateY = 80;
+                const datePoster = this.add.graphics();
+                datePoster.fillStyle(0x8B4513);
+                datePoster.fillRoundedRect(dateX - 100, dateY - 25, 200, 50, 15);
+                datePoster.fillStyle(0xF5DEB3);
+                datePoster.fillRoundedRect(dateX - 95, dateY - 20, 190, 40, 10);
+                datePoster.lineStyle(3, 0xD2691E);
+                datePoster.strokeRoundedRect(dateX - 90, dateY - 15, 180, 30, 8);
+                datePoster.setDepth(10);
+                
+                const dateText = this.add.text(dateX, dateY, `📅 ${dateStr}`, {
+                    fontSize: '14px',
+                    fill: '#8B4513',
+                    align: 'center',
+                    fontFamily: 'Noto Sans JP'
+                });
+                dateText.setOrigin(0.5);
+                dateText.setDepth(15);
+            };
+            
+            Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
+                // 本棚フレーム
+                const shelf = this.add.graphics();
+                shelf.fillStyle(0x8B4513);
+                shelf.fillRect(x, y, width, height);
+                shelf.fillStyle(0xA0522D);
+                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
+                
+                const shelfCount = 6;
+                for (let i = 1; i < shelfCount; i++) {
+                    const shelfY = y + (height / shelfCount) * i;
+                    shelf.fillStyle(0x8B4513);
+                    shelf.fillRect(x, shelfY - 3, width, 6);
+                }
+                shelf.setDepth(5);
+                
+                // 本の配置
+                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
+                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
+                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
+                    const bookHeight = shelfBottom - shelfTop - 5;
+                    
+                    let bookX = x + 10;
+                    while (bookX < x + width - 20) {
+                        const bookWidth = 8 + Math.random() * 12;
+                        const bookColor = this.getRandomBookColor();
+                        
+                        const book = this.add.rectangle(
+                            bookX + bookWidth/2, 
+                            shelfTop + bookHeight/2, 
+                            bookWidth, 
+                            bookHeight, 
+                            bookColor
+                        );
+                        book.setDepth(6);
+                        
+                        bookX += bookWidth + 2;
+                    }
+                }
+            };
+            
+            Phaser.Scene.prototype.getRandomBookColor = function() {
+                const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
+                return colors[Math.floor(Math.random() * colors.length)];
+            };
+
+            function setupFirebaseConnection() {
+                console.log('🔥 Setting up Firebase connection...');
+                
+                try {
+                    const playersRef = ref(database, 'players');
+                    const messagesRef = ref(database, 'messages');
+                    const reactionsRef = ref(database, 'reactions');
+                    
+                    // プレイヤー情報を登録
+                    const playerRef = ref(database, `players/${state.playerId}`);
+                    set(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        mugColor: state.selectedMugColor,
+                        deviceId: state.deviceId,
+                        userName: state.userName,
+                        timestamp: Date.now(),
+                        lastUpdate: Date.now()
+                    }).then(() => {
+                        console.log('✅ Firebase connection successful');
+                        state.isFirebaseReady = true;
+                        
+                        // 接続成功後にUI更新
+                        const userCountElement = document.getElementById('user-count');
+                        if (userCountElement) {
+                            userCountElement.textContent = '1';
+                        }
+                    }).catch((error) => {
+                        console.error('❌ Firebase connection failed:', error);
+                        state.isFirebaseReady = false;
+                        
+                        // 接続失敗時はオフラインモード
+                        const userCountElement = document.getElementById('user-count');
+                        if (userCountElement) {
+                            userCountElement.textContent = '1 (オフライン)';
+                        }
+                    });
+                    
+                    // 切断時の処理
+                    onDisconnect(playerRef).remove();
+                    
+                    // プレイヤー監視（リアルタイム更新）
+                    onValue(playersRef, (snapshot) => {
+                        try {
+                            const players = snapshot.val();
+                            const onlineCount = players ? Object.keys(players).length : 0;
+                            
+                            // オンライン人数更新
+                            const userCountElement = document.getElementById('user-count');
+                            if (userCountElement) {
+                                userCountElement.textContent = onlineCount;
+                            }
+                            
+                            if (players) {
+                                // 他のプレイヤーを表示
+                                Object.keys(players).forEach(id => {
+                                    if (id !== state.playerId) {
+                                        updateOtherPlayer.call(state.gameScene, id, players[id]);
+                                    }
+                                });
+                                
+                                // 退室したプレイヤーを削除
+                                Object.keys(otherPlayers).forEach(id => {
+                                    if (!players[id]) {
+                                        if (otherPlayers[id]) {
+                                            otherPlayers[id].destroy();
+                                            delete otherPlayers[id];
+                                        }
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn('Players update error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Players listener error:', error);
+                    });
+                    
+                    // メッセージ監視
+                    onValue(messagesRef, (snapshot) => {
+                        try {
+                            const messages = snapshot.val();
+                            if (messages) {
+                                const sessionMessages = Object.values(messages)
+                                    .filter(message => message.timestamp >= state.sessionStartTime)
+                                    .sort((a, b) => a.timestamp - b.timestamp);
+                                
+                                displayMessages(sessionMessages);
+                            } else {
+                                displayMessages([]);
+                            }
+                        } catch (error) {
+                            console.error('Messages listener error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Messages listener error:', error);
+                    });
+                    
+                    // リアクション監視
+                    onValue(reactionsRef, (snapshot) => {
+                        try {
+                            const reactions = snapshot.val();
+                            if (reactions) {
+                                Object.values(reactions).forEach(reaction => {
+                                    if (reaction.playerId !== state.playerId && 
+                                        Date.now() - reaction.timestamp < 5000) {
+                                        showReactionAnimation(reaction);
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn('Reactions listener error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Reactions listener error:', error);
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Firebase setup error:', error);
+                    state.isFirebaseReady = false;
+                }
+            }
+
+            function updateOtherPlayer(id, data) {
+                if (!otherPlayers[id]) {
+                    const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
+                    
+                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
+                    otherPlayers[id].setScale(1.0);
+                    otherPlayers[id].setAlpha(0.9);
+                    otherPlayers[id].setDepth(200);
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                } else {
+                    otherPlayers[id].x = data.x;
+                    otherPlayers[id].y = data.y;
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                }
+            }
+
+            function update() {
+                const speed = 3;
+                let moved = false;
+                const gameWidth = this.cameras.main.width;
+                
+                if (cursors.left.isDown && player.x > 50) {
+                    player.x -= speed;
+                    moved = true;
+                }
+                if (cursors.right.isDown && player.x < gameWidth - 50) {
+                    player.x += speed;
+                    moved = true;
+                }
+                
+                // プレイヤー位置をFirebaseに送信
+                if (moved && state.isFirebaseReady) {
+                    try {
+                        const playerRef = ref(database, `players/${state.playerId}`);
+                        set(playerRef, {
+                            x: player.x,
+                            y: player.y,
+                            mugColor: state.selectedMugColor,
+                            deviceId: state.deviceId,
+                            userName: state.userName,
+                            timestamp: Date.now(),
+                            lastUpdate: Date.now()
+                        });
+                    } catch (error) {
+                        console.warn('Player position update error:', error);
+                    }
+                }
+            }
+
+            state.gameInstance = new Phaser.Game(config);
+        }
+
+        // チャット機能（Firebase版）
+        function setupChat() {
+            const chatInput = document.getElementById('chat-input');
+            const reactionButtons = document.querySelector('.reaction-buttons');
+            
+            if (chatInput) {
+                chatInput.addEventListener('keypress', handleChatKeypress);
+            }
+            
+            if (reactionButtons) {
+                reactionButtons.addEventListener('click', handleReactionClick);
+            }
+            
+            displayMessages([]);
+        }
+        
+        function handleChatKeypress(e) {
+            if (e.key === 'Enter') {
+                const message = e.target.value.trim();
+                
+                if (message) {
+                    console.log('🔤 Enter pressed with message:', message);
+                    sendMessage(message);
+                    e.target.value = '';
+                }
+            }
+        }
+        
+        function handleReactionClick(e) {
+            if (e.target.classList.contains('reaction-btn')) {
+                const reaction = e.target.getAttribute('data-reaction');
+                console.log('👆 Reaction button clicked:', reaction);
+                sendReaction(reaction);
+            }
+        }
+        
+        function sendMessage(text) {
+            if (!text || !text.trim()) return;
+            
+            console.log('💬 Attempting to send message:', text);
+            
+            if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, using local display only');
+                // Firebase未接続時はローカル表示のみ
+                showSpeechBubble(text);
+                return;
+            }
+            
+            try {
+                const messagesRef = ref(database, 'messages');
+                const messageRef = push(messagesRef);
+                
+                const messageData = {
+                    playerId: state.playerId,
+                    userName: state.userName,
+                    text: text.trim(),
+                    timestamp: Date.now(),
+                    mugColor: state.selectedMugColor
+                };
+                
+                set(messageRef, messageData).then(() => {
+                    console.log('✅ Message sent successfully');
+                    showSpeechBubble(text);
+                }).catch((error) => {
+                    console.error('❌ Message send failed:', error);
+                    // エラー時もローカル表示
+                    showSpeechBubble(text);
+                });
+            } catch (error) {
+                console.error('❌ Send message error:', error);
+                // エラー時もローカル表示
+                showSpeechBubble(text);
+            }
+        }
+        
+        function sendReaction(emoji) {
+            console.log('😊 Attempting to send reaction:', emoji);
+            
+            // 常にローカルアニメーション表示
+            showLocalReactionAnimation(emoji);
+            
+            if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, local reaction only');
+                return;
+            }
+            
+            try {
+                const reactionsRef = ref(database, 'reactions');
+                const reactionRef = push(reactionsRef);
+                
+                set(reactionRef, {
+                    playerId: state.playerId,
+                    userName: state.userName,
+                    emoji: emoji,
+                    timestamp: Date.now(),
+                    mugColor: state.selectedMugColor
+                }).then(() => {
+                    console.log('✅ Reaction sent successfully');
+                }).catch((error) => {
+                    console.error('❌ Reaction send failed:', error);
+                });
+            } catch (error) {
+                console.warn('Send reaction error:', error);
+            }
+        }
+        
+        function showSpeechBubble(text) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = text;
+            
+            // プレイヤーの実際の位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            const player = scene.children.list.find(obj => obj.playerId === state.playerId);
+            
+            if (player) {
+                // マグカップの真上中央に正確に配置
+                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 85)); // 85px左にオフセット
+                const y = Math.max(10, player.y - 100);
+                
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+                
+                // プレイヤーオブジェクトへの参照を保存
+                bubble.followPlayer = player;
+            } else {
+                // フォールバック位置
+                bubble.style.left = '100px';
+                bubble.style.top = '350px';
+            }
+            
+            gameArea.appendChild(bubble);
+            state.speechBubbles.push(bubble);
+            
+            // 追従アニメーション用の更新関数
+            function updateBubblePosition() {
+                if (bubble.followPlayer && bubble.parentNode) {
+                    const newX = Math.max(10, Math.min(gameArea.clientWidth - 210, bubble.followPlayer.x - 85));
+                    const newY = Math.max(10, bubble.followPlayer.y - 100);
+                    
+                    bubble.style.left = newX + 'px';
+                    bubble.style.top = newY + 'px';
+                    
+                    // 次のフレームでも更新
+                    requestAnimationFrame(updateBubblePosition);
+                }
+            }
+            
+            // 追従開始
+            requestAnimationFrame(updateBubblePosition);
+            
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    const index = state.speechBubbles.indexOf(bubble);
+                    if (index > -1) {
+                        state.speechBubbles.splice(index, 1);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function showLocalReactionAnimation(emoji) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = emoji;
+            
+            // プレイヤーの実際の位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            const player = scene.children.list.find(obj => obj.playerId === state.playerId);
+            
+            if (player) {
+                // マグカップの真上中央に正確に配置
+                const x = player.x - 12; // 中央揃え
+                const y = player.y - 70;
+                
+                reaction.style.left = x + 'px';
+                reaction.style.top = y + 'px';
+                
+                // プレイヤーオブジェクトへの参照を保存
+                reaction.followPlayer = player;
+            } else {
+                // フォールバック位置
+                reaction.style.left = '100px';
+                reaction.style.top = '300px';
+            }
+            
+            gameArea.appendChild(reaction);
+            state.reactionAnimations.push(reaction);
+            
+            // 追従アニメーション用の更新関数（リアクション用）
+            function updateReactionPosition() {
+                if (reaction.followPlayer && reaction.parentNode) {
+                    const newX = reaction.followPlayer.x - 12;
+                    const newY = reaction.followPlayer.y - 70;
+                    
+                    reaction.style.left = newX + 'px';
+                    reaction.style.top = newY + 'px';
+                    
+                    // 次のフレームでも更新
+                    requestAnimationFrame(updateReactionPosition);
+                }
+            }
+            
+            // 追従開始
+            requestAnimationFrame(updateReactionPosition);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+                const index = state.reactionAnimations.indexOf(reaction);
+                if (index > -1) {
+                    state.reactionAnimations.splice(index, 1);
+                }
+            }, 3000);
+        }
+        
+        function showReactionAnimation(reactionData) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = reactionData.emoji;
+            
+            // 他のプレイヤーの位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            let foundPlayer = false;
+            
+            scene.children.list.forEach(obj => {
+                if (obj.texture && obj.texture.key.startsWith('mug-') && obj.userName) {
+                    if (obj.userName === reactionData.userName) {
+                        const x = obj.x - 12;
+                        const y = obj.y - 50;
+                        
+                        reaction.style.left = x + 'px';
+                        reaction.style.top = y + 'px';
+                        foundPlayer = true;
+                    }
+                }
+            });
+            
+            if (!foundPlayer) {
+                reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
+                reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
+            }
+            
+            gameArea.appendChild(reaction);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+            }, 3000);
+        }
+        
+        function displayMessages(messages) {
+            const chatMessages = elements.chatMessages;
+            if (!chatMessages) return;
+            
+            chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div></div>';
+            
+            if (messages && messages.length > 0) {
+                messages.slice(-20).forEach(message => {
+                    if (!message.text || !message.userName) return;
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message';
+                    
+                    const author = document.createElement('div');
+                    author.className = 'message-author';
+                    author.textContent = `🦔 ${message.userName}`;
+                    author.style.color = message.mugColor || '#8B4513';
+                    
+                    const text = document.createElement('div');
+                    text.className = 'message-text';
+                    text.textContent = message.text;
+                    
+                    messageDiv.appendChild(author);
+                    messageDiv.appendChild(text);
+                    chatMessages.appendChild(messageDiv);
+                });
+            }
+            
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        // イベントリスナー設定
+        function setupEventListeners() {
+            const nameInput = elements.nameInput;
+            const nameNextBtn = elements.nameNextBtn;
+            const startBtn = elements.startBtn;
+            
+            if (nameInput) {
+                nameInput.addEventListener('input', updateNameButton);
+                nameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && nameInput.value.trim()) {
+                        goToMugSelection();
+                    }
+                });
+            }
+            
+            if (nameNextBtn) {
+                nameNextBtn.addEventListener('click', goToMugSelection);
+            }
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', startGame);
+            }
+            
+            window.addEventListener('resize', () => {
+                if (state.gameInstance) {
+                    const gameArea = elements.gameArea;
+                    if (gameArea) {
+                        state.gameInstance.scale.resize(gameArea.clientWidth, gameArea.clientHeight);
+                    }
+                }
+            });
+        }
+
+        // メイン初期化
+        function initialize() {
+            if (state.isInitialized) return;
+            
+            console.log('🦔 Initializing Harinezumi Cafe (Firebase Version)...');
+            
+            if (!checkCompanyAccess()) {
+                return;
+            }
+            
+            setupEventListeners();
+            showNameScreen();
+            
+            state.isInitialized = true;
+            console.log('✅ Initialization complete');
+        }
+
+        // DOM読み込み完了後に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+        
+        console.log('🦔 Harinezumi Cafe Firebase script loaded');
+    </script>
 </body>
 </html>
