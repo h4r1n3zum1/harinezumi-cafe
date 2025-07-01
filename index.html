@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ハリネズミカフェ バーチャルオフィス</title>
+    <title>ハリネズミカフェ - デバッグ版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
@@ -250,6 +250,20 @@
             color: #666;
         }
         
+        .debug-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #ff0000;
+            color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 2000;
+        }
+        
         .speech-bubble {
             position: absolute;
             background: rgba(255, 255, 255, 0.95);
@@ -325,6 +339,14 @@
     </style>
 </head>
 <body>
+    <!-- デバッグ情報（非表示にする場合はstyle="display: none;"を追加） -->
+    <div class="debug-info" id="debug-info" style="display: none;">
+        🔍 デバッグモード<br>
+        Firebase状態: <span id="firebase-status">接続中...</span><br>
+        オンライン人数: <span id="debug-user-count">0</span><br>
+        エラー: <span id="error-log">なし</span>
+    </div>
+
     <!-- 名前入力画面 -->
     <div class="screen" id="name-screen">
         <h2>🦔 ハリネズミカフェへようこそ</h2>
@@ -375,22 +397,46 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-        
-        // 🔥 Firebase設定（修正版）
-        const firebaseConfig = {
-            apiKey: "AIzaSyCW5Z22SV6NE41EEg_KyTzabfySNM3smEk",
-            authDomain: "harinezumi-cafe.firebaseapp.com",
-            databaseURL: "https://harinezumi-cafe-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "harinezumi-cafe",
-            storageBucket: "harinezumi-cafe.firebasestorage.app",
-            messagingSenderId: "102145355730",
-            appId: "1:102145355730:web:b2d3552560b00ebcb860cb"
-        };
+        // デバッグ用関数
+        function updateDebugInfo(status, userCount, error = null) {
+            const statusEl = document.getElementById('firebase-status');
+            const userCountEl = document.getElementById('debug-user-count');
+            const errorEl = document.getElementById('error-log');
+            
+            if (statusEl) statusEl.textContent = status;
+            if (userCountEl) userCountEl.textContent = userCount;
+            if (errorEl) errorEl.textContent = error || 'なし';
+        }
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        // Firebase設定をより安全にテスト
+        let firebaseEnabled = true;
+        let database = null;
+        
+        try {
+            // Firebase動的インポート
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
+            const { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js");
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyCW5Z22SV6NE41EEg_KyTzabfySNM3smEk",
+                authDomain: "harinezumi-cafe.firebaseapp.com",
+                databaseURL: "https://harinezumi-cafe-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "harinezumi-cafe",
+                storageBucket: "harinezumi-cafe.firebasestorage.app",
+                messagingSenderId: "102145355730",
+                appId: "1:102145355730:web:b2d3552560b00ebcb860cb"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            
+            updateDebugInfo('Firebase接続成功', 0);
+            
+        } catch (error) {
+            console.error('Firebase接続エラー:', error);
+            updateDebugInfo('Firebase接続失敗', 0, error.message);
+            firebaseEnabled = false;
+        }
         
         // グローバル変数
         const COMPANY_CODE = "HarinezumiCafe";
@@ -409,7 +455,7 @@
             { color: '#9370DB', name: 'ラベンダー' }
         ];
         
-        // 状態管理
+        // 状態管理（ローカル優先版）
         let state = {
             selectedMugColor: '',
             userName: '',
@@ -422,31 +468,28 @@
             isInitialized: false,
             currentStep: 'name',
             sessionStartTime: Date.now(),
-            isFirebaseReady: false
-        };
-
-        // DOM要素取得
-        const elements = {
-            get nameScreen() { return document.getElementById('name-screen'); },
-            get mugScreen() { return document.getElementById('mug-screen'); },
-            get mainContainer() { return document.getElementById('main-container'); },
-            get nameInput() { return document.getElementById('name-input'); },
-            get nameNextBtn() { return document.getElementById('name-next-btn'); },
-            get characterGrid() { return document.getElementById('character-grid'); },
-            get startBtn() { return document.getElementById('start-btn'); },
-            get gameArea() { return document.getElementById('game-area'); },
-            get chatInput() { return document.getElementById('chat-input'); },
-            get chatMessages() { return document.getElementById('chat-messages'); },
-            get userCount() { return document.getElementById('user-count'); },
-            get reactionButtons() { return document.querySelector('.reaction-buttons'); }
+            isFirebaseReady: firebaseEnabled,
+            localPlayers: new Map(),
+            localUserCount: 1
         };
 
         // ユーティリティ関数
         function generateDeviceId() {
-            let id = localStorage.getItem('device-id');
+            const storageKey = 'harinezumi-device-id';
+            let id;
+            try {
+                id = localStorage.getItem(storageKey);
+            } catch (e) {
+                console.warn('localStorage不使用');
+            }
+            
             if (!id) {
                 id = 'device_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-                localStorage.setItem('device-id', id);
+                try {
+                    localStorage.setItem(storageKey, id);
+                } catch (e) {
+                    console.warn('localStorage保存できませんでした');
+                }
             }
             return id;
         }
@@ -482,7 +525,12 @@
 
         // 会社コードチェック
         function checkCompanyAccess() {
-            let entryCode = localStorage.getItem('company-entry-code');
+            let entryCode;
+            try {
+                entryCode = localStorage.getItem('company-entry-code');
+            } catch (e) {
+                console.warn('localStorage読み取りエラー');
+            }
             
             if (!entryCode || entryCode !== COMPANY_CODE) {
                 entryCode = prompt('🔐 会社アクセスコードを入力してください:\n\n※このアプリは社内利用限定です');
@@ -492,12 +540,32 @@
                     return false;
                 }
                 
-                localStorage.setItem('company-entry-code', entryCode);
+                try {
+                    localStorage.setItem('company-entry-code', entryCode);
+                } catch (e) {
+                    console.warn('localStorage保存エラー');
+                }
                 alert('✅ アクセスが承認されました。ハリネズミカフェへようこそ！');
             }
             
             return true;
         }
+
+        // DOM要素取得
+        const elements = {
+            get nameScreen() { return document.getElementById('name-screen'); },
+            get mugScreen() { return document.getElementById('mug-screen'); },
+            get mainContainer() { return document.getElementById('main-container'); },
+            get nameInput() { return document.getElementById('name-input'); },
+            get nameNextBtn() { return document.getElementById('name-next-btn'); },
+            get characterGrid() { return document.getElementById('character-grid'); },
+            get startBtn() { return document.getElementById('start-btn'); },
+            get gameArea() { return document.getElementById('game-area'); },
+            get chatInput() { return document.getElementById('chat-input'); },
+            get chatMessages() { return document.getElementById('chat-messages'); },
+            get userCount() { return document.getElementById('user-count'); },
+            get reactionButtons() { return document.querySelector('.reaction-buttons'); }
+        };
 
         // 画面制御
         function showNameScreen() {
@@ -598,8 +666,22 @@
             }
             
             state.deviceId = generateDeviceId();
-            state.playerId = generateSessionId(); // 新しいセッションIDを毎回生成
+            state.playerId = generateSessionId();
             state.currentStep = 'game';
+            
+            // ローカル参加者に自分を追加
+            state.localPlayers.set(state.playerId, {
+                userName: state.userName,
+                mugColor: state.selectedMugColor,
+                x: 100,
+                y: 400
+            });
+            
+            updateDebugInfo(
+                state.isFirebaseReady ? 'Firebase接続済み' : 'ローカルモード', 
+                state.localUserCount
+            );
+            
             showGameScreen();
         }
 
@@ -636,24 +718,17 @@
             }
             
             function createAssets() {
-                // カフェテーブル
+                // マグカップテクスチャ作成
+                this.createMugTexture(state.selectedMugColor, 'player-mug');
+                
+                // テーブルテクスチャ作成
                 const tableGraphics = this.add.graphics();
                 tableGraphics.fillStyle(0x8B4513);
-                tableGraphics.fillRoundedRect(0, 0, 800, 120, 15);
+                tableGraphics.fillRoundedRect(0, 0, 600, 80, 10);
                 tableGraphics.fillStyle(0xA0522D);
-                tableGraphics.fillRoundedRect(10, 10, 780, 100, 10);
-                tableGraphics.fillStyle(0x654321);
-                for (let i = 0; i < 8; i++) {
-                    tableGraphics.fillRect(20, 20 + i * 10, 760, 4);
-                }
-                tableGraphics.generateTexture('cafe-table', 800, 120);
+                tableGraphics.fillRoundedRect(5, 5, 590, 70, 8);
+                tableGraphics.generateTexture('table', 600, 80);
                 tableGraphics.destroy();
-
-                // マグカップテクスチャ（全色）
-                MUG_COLORS.forEach((mug, index) => {
-                    this.createMugTexture(mug.color, `mug-${index}`);
-                });
-                this.createMugTexture(state.selectedMugColor, 'player-mug');
             }
             
             Phaser.Scene.prototype.createMugTexture = function(color, key) {
@@ -683,308 +758,78 @@
                 const gameHeight = this.cameras.main.height;
                 
                 // 背景作成
-                this.createCafeBackground(gameWidth, gameHeight);
-                
-                // テーブル配置
-                const tableY = gameHeight - 120;
-                const table = this.add.image(gameWidth / 2, tableY, 'cafe-table');
-                table.setDisplaySize(gameWidth - 40, 120);
-                table.setDepth(1);
-                
-                // プレイヤー作成
-                const startX = 100 + Math.random() * 200; // ランダムな開始位置
-                const playerY = tableY - 40;
-                
-                player = this.add.sprite(startX, playerY, 'player-mug');
-                player.setScale(1.0);
-                player.playerId = state.playerId;
-                player.setDepth(200);
-                
-                cursors = this.input.keyboard.createCursorKeys();
-                this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
-                
-                setupFirebaseConnection();
-            }
-
-            Phaser.Scene.prototype.createCafeBackground = function(width, height) {
-                // シンプルな背景
                 const bg = this.add.graphics();
                 bg.fillGradientStyle(0xFDF5E6, 0xF5DEB3, 0xDEB887, 0xD2B48C, 1);
-                bg.fillRect(0, 0, width, height);
+                bg.fillRect(0, 0, gameWidth, gameHeight);
                 bg.setDepth(-100);
                 
-                // 木目調の床
-                for (let i = 0; i < width; i += 40) {
-                    const floorPlank = this.add.graphics();
-                    floorPlank.fillStyle(0xCD853F);
-                    floorPlank.fillRect(i, height - 150, 38, 150);
-                    floorPlank.fillRect(i, height - 150, 2, 150);
-                    floorPlank.fillRect(i + 36, height - 150, 2, 150);
-                    floorPlank.setDepth(-90);
-                }
+                // テーブル配置（画面サイズに合わせて調整）
+                const tableWidth = Math.min(gameWidth - 40, 600);
+                const table = this.add.image(gameWidth / 2, gameHeight - 120, 'table');
+                table.setDisplaySize(tableWidth, 80);
+                table.setDepth(1);
                 
-                // レトロな壁紙
-                for (let x = 0; x < width; x += 60) {
-                    for (let y = 0; y < height - 150; y += 80) {
-                        const wallpaper = this.add.graphics();
-                        wallpaper.fillStyle(0xF5DEB3);
-                        wallpaper.fillRect(x, y, 60, 80);
-                        wallpaper.lineStyle(2, 0xDEB887);
-                        wallpaper.strokeRect(x + 5, y + 5, 50, 70);
-                        wallpaper.fillStyle(0xD2691E);
-                        wallpaper.fillCircle(x + 30, y + 40, 8);
-                        wallpaper.setDepth(-95);
-                    }
-                }
+                // プレイヤーを画面内の安全な位置に配置
+                const safeX = Math.max(60, Math.min(gameWidth - 60, 100 + Math.random() * (gameWidth - 200)));
+                const safeY = Math.max(120, gameHeight - 180);
                 
-                // 本棚（左右）
-                this.createBookshelf(50, 50, 120, height - 250);
-                this.createBookshelf(width - 170, 50, 120, height - 250);
+                player = this.add.sprite(safeX, safeY, 'player-mug');
+                player.setScale(1.0);
+                player.playerId = state.playerId;
+                player.setDepth(10);
                 
-                // 中央の日付表示
-                const today = new Date();
-                const dateStr = today.toLocaleDateString('ja-JP', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'long'
-                });
+                // カメラの境界を設定
+                this.cameras.main.setBounds(0, 0, gameWidth, gameHeight);
                 
-                const dateX = width / 2;
-                const dateY = 80;
-                const datePoster = this.add.graphics();
-                datePoster.fillStyle(0x8B4513);
-                datePoster.fillRoundedRect(dateX - 100, dateY - 25, 200, 50, 15);
-                datePoster.fillStyle(0xF5DEB3);
-                datePoster.fillRoundedRect(dateX - 95, dateY - 20, 190, 40, 10);
-                datePoster.lineStyle(3, 0xD2691E);
-                datePoster.strokeRoundedRect(dateX - 90, dateY - 15, 180, 30, 8);
-                datePoster.setDepth(10);
+                // キーボード操作設定
+                cursors = this.input.keyboard.createCursorKeys();
                 
-                const dateText = this.add.text(dateX, dateY, `📅 ${dateStr}`, {
-                    fontSize: '14px',
-                    fill: '#8B4513',
-                    align: 'center',
-                    fontFamily: 'Noto Sans JP'
-                });
-                dateText.setOrigin(0.5);
-                dateText.setDepth(15);
-            };
-            
-            Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
-                // 本棚フレーム
-                const shelf = this.add.graphics();
-                shelf.fillStyle(0x8B4513);
-                shelf.fillRect(x, y, width, height);
-                shelf.fillStyle(0xA0522D);
-                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
-                
-                const shelfCount = 6;
-                for (let i = 1; i < shelfCount; i++) {
-                    const shelfY = y + (height / shelfCount) * i;
-                    shelf.fillStyle(0x8B4513);
-                    shelf.fillRect(x, shelfY - 3, width, 6);
-                }
-                shelf.setDepth(5);
-                
-                // 本の配置
-                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
-                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
-                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
-                    const bookHeight = shelfBottom - shelfTop - 5;
-                    
-                    let bookX = x + 10;
-                    while (bookX < x + width - 20) {
-                        const bookWidth = 8 + Math.random() * 12;
-                        const bookColor = this.getRandomBookColor();
-                        
-                        const book = this.add.rectangle(
-                            bookX + bookWidth/2, 
-                            shelfTop + bookHeight/2, 
-                            bookWidth, 
-                            bookHeight, 
-                            bookColor
-                        );
-                        book.setDepth(6);
-                        
-                        bookX += bookWidth + 2;
-                    }
-                }
-            };
-            
-            Phaser.Scene.prototype.getRandomBookColor = function() {
-                const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
-                return colors[Math.floor(Math.random() * colors.length)];
-            };
-
-            function setupFirebaseConnection() {
-                console.log('🔥 Setting up Firebase connection...');
-                
-                try {
-                    const playersRef = ref(database, 'players');
-                    const messagesRef = ref(database, 'messages');
-                    const reactionsRef = ref(database, 'reactions');
-                    
-                    // プレイヤー情報を登録
-                    const playerRef = ref(database, `players/${state.playerId}`);
-                    set(playerRef, {
-                        x: player.x,
-                        y: player.y,
-                        mugColor: state.selectedMugColor,
-                        deviceId: state.deviceId,
-                        userName: state.userName,
-                        timestamp: Date.now(),
-                        lastUpdate: Date.now()
-                    }).then(() => {
-                        console.log('✅ Firebase connection successful');
-                        state.isFirebaseReady = true;
-                        
-                        // 接続成功後にUI更新
-                        const userCountElement = document.getElementById('user-count');
-                        if (userCountElement) {
-                            userCountElement.textContent = '1';
-                        }
-                    }).catch((error) => {
-                        console.error('❌ Firebase connection failed:', error);
-                        state.isFirebaseReady = false;
-                        
-                        // 接続失敗時はオフラインモード
-                        const userCountElement = document.getElementById('user-count');
-                        if (userCountElement) {
-                            userCountElement.textContent = '1 (オフライン)';
-                        }
-                    });
-                    
-                    // 切断時の処理
-                    onDisconnect(playerRef).remove();
-                    
-                    // プレイヤー監視（リアルタイム更新）
-                    onValue(playersRef, (snapshot) => {
-                        try {
-                            const players = snapshot.val();
-                            const onlineCount = players ? Object.keys(players).length : 0;
-                            
-                            // オンライン人数更新
-                            const userCountElement = document.getElementById('user-count');
-                            if (userCountElement) {
-                                userCountElement.textContent = onlineCount;
-                            }
-                            
-                            if (players) {
-                                // 他のプレイヤーを表示
-                                Object.keys(players).forEach(id => {
-                                    if (id !== state.playerId) {
-                                        updateOtherPlayer.call(state.gameScene, id, players[id]);
-                                    }
-                                });
-                                
-                                // 退室したプレイヤーを削除
-                                Object.keys(otherPlayers).forEach(id => {
-                                    if (!players[id]) {
-                                        if (otherPlayers[id]) {
-                                            otherPlayers[id].destroy();
-                                            delete otherPlayers[id];
-                                        }
-                                    }
-                                });
-                            }
-                        } catch (error) {
-                            console.warn('Players update error:', error);
-                        }
-                    }, (error) => {
-                        console.error('Players listener error:', error);
-                    });
-                    
-                    // メッセージ監視
-                    onValue(messagesRef, (snapshot) => {
-                        try {
-                            const messages = snapshot.val();
-                            if (messages) {
-                                const sessionMessages = Object.values(messages)
-                                    .filter(message => message.timestamp >= state.sessionStartTime)
-                                    .sort((a, b) => a.timestamp - b.timestamp);
-                                
-                                displayMessages(sessionMessages);
-                            } else {
-                                displayMessages([]);
-                            }
-                        } catch (error) {
-                            console.error('Messages listener error:', error);
-                        }
-                    }, (error) => {
-                        console.error('Messages listener error:', error);
-                    });
-                    
-                    // リアクション監視
-                    onValue(reactionsRef, (snapshot) => {
-                        try {
-                            const reactions = snapshot.val();
-                            if (reactions) {
-                                Object.values(reactions).forEach(reaction => {
-                                    if (reaction.playerId !== state.playerId && 
-                                        Date.now() - reaction.timestamp < 5000) {
-                                        showReactionAnimation(reaction);
-                                    }
-                                });
-                            }
-                        } catch (error) {
-                            console.warn('Reactions listener error:', error);
-                        }
-                    }, (error) => {
-                        console.error('Reactions listener error:', error);
-                    });
-                    
-                } catch (error) {
-                    console.error('❌ Firebase setup error:', error);
-                    state.isFirebaseReady = false;
-                }
-            }
-
-            function updateOtherPlayer(id, data) {
-                if (!otherPlayers[id]) {
-                    const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
-                    
-                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
-                    otherPlayers[id].setScale(1.0);
-                    otherPlayers[id].setAlpha(0.9);
-                    otherPlayers[id].setDepth(200);
-                    otherPlayers[id].userName = data.userName || 'ゲスト';
-                } else {
-                    otherPlayers[id].x = data.x;
-                    otherPlayers[id].y = data.y;
-                    otherPlayers[id].userName = data.userName || 'ゲスト';
-                }
+                // ユーザー数表示更新
+                updateUserCount();
             }
 
             function update() {
                 const speed = 3;
                 let moved = false;
                 const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
                 
-                if (cursors.left.isDown && player.x > 50) {
-                    player.x -= speed;
+                // 境界値を設定（マグカップのサイズを考慮）
+                const leftBound = 30;
+                const rightBound = gameWidth - 30;
+                const topBound = 100;
+                const bottomBound = gameHeight - 150;
+                
+                // 移動制御（境界内に制限）
+                if (cursors.left.isDown && player.x > leftBound) {
+                    player.x = Math.max(leftBound, player.x - speed);
                     moved = true;
                 }
-                if (cursors.right.isDown && player.x < gameWidth - 50) {
-                    player.x += speed;
+                if (cursors.right.isDown && player.x < rightBound) {
+                    player.x = Math.min(rightBound, player.x + speed);
+                    moved = true;
+                }
+                if (cursors.up.isDown && player.y > topBound) {
+                    player.y = Math.max(topBound, player.y - speed);
+                    moved = true;
+                }
+                if (cursors.down.isDown && player.y < bottomBound) {
+                    player.y = Math.min(bottomBound, player.y + speed);
                     moved = true;
                 }
                 
-                // プレイヤー位置をFirebaseに送信
-                if (moved && state.isFirebaseReady) {
-                    try {
-                        const playerRef = ref(database, `players/${state.playerId}`);
-                        set(playerRef, {
-                            x: player.x,
-                            y: player.y,
-                            mugColor: state.selectedMugColor,
-                            deviceId: state.deviceId,
-                            userName: state.userName,
-                            timestamp: Date.now(),
-                            lastUpdate: Date.now()
-                        });
-                    } catch (error) {
-                        console.warn('Player position update error:', error);
+                // プレイヤーが境界外にいる場合は強制的に境界内に戻す
+                if (player.x < leftBound) player.x = leftBound;
+                if (player.x > rightBound) player.x = rightBound;
+                if (player.y < topBound) player.y = topBound;
+                if (player.y > bottomBound) player.y = bottomBound;
+                
+                if (moved) {
+                    // ローカル位置更新
+                    const localPlayer = state.localPlayers.get(state.playerId);
+                    if (localPlayer) {
+                        localPlayer.x = player.x;
+                        localPlayer.y = player.y;
                     }
                 }
             }
@@ -992,7 +837,20 @@
             state.gameInstance = new Phaser.Game(config);
         }
 
-        // チャット機能（Firebase版）
+        // ユーザー数更新
+        function updateUserCount() {
+            const userCountElement = document.getElementById('user-count');
+            const debugUserCountElement = document.getElementById('debug-user-count');
+            
+            if (userCountElement) {
+                userCountElement.textContent = state.localUserCount;
+            }
+            if (debugUserCountElement) {
+                debugUserCountElement.textContent = state.localUserCount;
+            }
+        }
+
+        // チャット機能
         function setupChat() {
             const chatInput = document.getElementById('chat-input');
             const reactionButtons = document.querySelector('.reaction-buttons');
@@ -1013,7 +871,6 @@
                 const message = e.target.value.trim();
                 
                 if (message) {
-                    console.log('🔤 Enter pressed with message:', message);
                     sendMessage(message);
                     e.target.value = '';
                 }
@@ -1023,7 +880,6 @@
         function handleReactionClick(e) {
             if (e.target.classList.contains('reaction-btn')) {
                 const reaction = e.target.getAttribute('data-reaction');
-                console.log('👆 Reaction button clicked:', reaction);
                 sendReaction(reaction);
             }
         }
@@ -1031,71 +887,34 @@
         function sendMessage(text) {
             if (!text || !text.trim()) return;
             
-            console.log('💬 Attempting to send message:', text);
+            // ローカル表示
+            showSpeechBubble(text);
             
-            if (!state.isFirebaseReady) {
-                console.warn('❌ Firebase not ready, using local display only');
-                // Firebase未接続時はローカル表示のみ
-                showSpeechBubble(text);
-                return;
-            }
-            
-            try {
-                const messagesRef = ref(database, 'messages');
-                const messageRef = push(messagesRef);
+            // チャットエリアにも表示
+            const chatMessages = document.getElementById('chat-messages');
+            if (chatMessages) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
                 
-                const messageData = {
-                    playerId: state.playerId,
-                    userName: state.userName,
-                    text: text.trim(),
-                    timestamp: Date.now(),
-                    mugColor: state.selectedMugColor
-                };
+                const author = document.createElement('div');
+                author.className = 'message-author';
+                author.textContent = `🦔 ${state.userName}`;
+                author.style.color = state.selectedMugColor || '#8B4513';
                 
-                set(messageRef, messageData).then(() => {
-                    console.log('✅ Message sent successfully');
-                    showSpeechBubble(text);
-                }).catch((error) => {
-                    console.error('❌ Message send failed:', error);
-                    // エラー時もローカル表示
-                    showSpeechBubble(text);
-                });
-            } catch (error) {
-                console.error('❌ Send message error:', error);
-                // エラー時もローカル表示
-                showSpeechBubble(text);
+                const messageText = document.createElement('div');
+                messageText.className = 'message-text';
+                messageText.textContent = text;
+                
+                messageDiv.appendChild(author);
+                messageDiv.appendChild(messageText);
+                chatMessages.appendChild(messageDiv);
+                
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         }
         
         function sendReaction(emoji) {
-            console.log('😊 Attempting to send reaction:', emoji);
-            
-            // 常にローカルアニメーション表示
             showLocalReactionAnimation(emoji);
-            
-            if (!state.isFirebaseReady) {
-                console.warn('❌ Firebase not ready, local reaction only');
-                return;
-            }
-            
-            try {
-                const reactionsRef = ref(database, 'reactions');
-                const reactionRef = push(reactionsRef);
-                
-                set(reactionRef, {
-                    playerId: state.playerId,
-                    userName: state.userName,
-                    emoji: emoji,
-                    timestamp: Date.now(),
-                    mugColor: state.selectedMugColor
-                }).then(() => {
-                    console.log('✅ Reaction sent successfully');
-                }).catch((error) => {
-                    console.error('❌ Reaction send failed:', error);
-                });
-            } catch (error) {
-                console.warn('Send reaction error:', error);
-            }
         }
         
         function showSpeechBubble(text) {
@@ -1111,9 +930,15 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
-                // マグカップの真上中央に正確に配置
-                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 85)); // 85px左にオフセット
-                const y = Math.max(10, player.y - 100);
+                // マグカップの真上中央に配置（画面内に制限）
+                const maxBubbleWidth = 200;
+                const margin = 10;
+                
+                let x = player.x - (maxBubbleWidth / 2);
+                x = Math.max(margin, Math.min(gameArea.clientWidth - maxBubbleWidth - margin, x));
+                
+                let y = player.y - 100;
+                y = Math.max(margin, y);
                 
                 bubble.style.left = x + 'px';
                 bubble.style.top = y + 'px';
@@ -1121,9 +946,9 @@
                 // プレイヤーオブジェクトへの参照を保存
                 bubble.followPlayer = player;
             } else {
-                // フォールバック位置
-                bubble.style.left = '100px';
-                bubble.style.top = '350px';
+                // フォールバック位置（画面中央）
+                bubble.style.left = (gameArea.clientWidth / 2 - 100) + 'px';
+                bubble.style.top = (gameArea.clientHeight / 2 - 50) + 'px';
             }
             
             gameArea.appendChild(bubble);
@@ -1132,8 +957,14 @@
             // 追従アニメーション用の更新関数
             function updateBubblePosition() {
                 if (bubble.followPlayer && bubble.parentNode) {
-                    const newX = Math.max(10, Math.min(gameArea.clientWidth - 210, bubble.followPlayer.x - 85));
-                    const newY = Math.max(10, bubble.followPlayer.y - 100);
+                    const maxBubbleWidth = 200;
+                    const margin = 10;
+                    
+                    let newX = bubble.followPlayer.x - (maxBubbleWidth / 2);
+                    newX = Math.max(margin, Math.min(gameArea.clientWidth - maxBubbleWidth - margin, newX));
+                    
+                    let newY = bubble.followPlayer.y - 100;
+                    newY = Math.max(margin, newY);
                     
                     bubble.style.left = newX + 'px';
                     bubble.style.top = newY + 'px';
@@ -1173,9 +1004,14 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
-                // マグカップの真上中央に正確に配置
-                const x = player.x - 12; // 中央揃え
-                const y = player.y - 70;
+                // マグカップの真上中央に配置（画面内に制限）
+                const margin = 30;
+                
+                let x = player.x - 12; // 中央揃え
+                x = Math.max(margin, Math.min(gameArea.clientWidth - margin, x));
+                
+                let y = player.y - 70;
+                y = Math.max(margin, y);
                 
                 reaction.style.left = x + 'px';
                 reaction.style.top = y + 'px';
@@ -1183,9 +1019,9 @@
                 // プレイヤーオブジェクトへの参照を保存
                 reaction.followPlayer = player;
             } else {
-                // フォールバック位置
-                reaction.style.left = '100px';
-                reaction.style.top = '300px';
+                // フォールバック位置（画面中央）
+                reaction.style.left = (gameArea.clientWidth / 2) + 'px';
+                reaction.style.top = (gameArea.clientHeight / 2) + 'px';
             }
             
             gameArea.appendChild(reaction);
@@ -1194,8 +1030,13 @@
             // 追従アニメーション用の更新関数（リアクション用）
             function updateReactionPosition() {
                 if (reaction.followPlayer && reaction.parentNode) {
-                    const newX = reaction.followPlayer.x - 12;
-                    const newY = reaction.followPlayer.y - 70;
+                    const margin = 30;
+                    
+                    let newX = reaction.followPlayer.x - 12;
+                    newX = Math.max(margin, Math.min(gameArea.clientWidth - margin, newX));
+                    
+                    let newY = reaction.followPlayer.y - 70;
+                    newY = Math.max(margin, newY);
                     
                     reaction.style.left = newX + 'px';
                     reaction.style.top = newY + 'px';
@@ -1219,47 +1060,8 @@
             }, 3000);
         }
         
-        function showReactionAnimation(reactionData) {
-            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
-            
-            const gameArea = elements.gameArea;
-            const reaction = document.createElement('div');
-            reaction.className = 'reaction-animation';
-            reaction.textContent = reactionData.emoji;
-            
-            // 他のプレイヤーの位置を取得
-            const scene = state.gameScene.sys.game.scene.scenes[0];
-            let foundPlayer = false;
-            
-            scene.children.list.forEach(obj => {
-                if (obj.texture && obj.texture.key.startsWith('mug-') && obj.userName) {
-                    if (obj.userName === reactionData.userName) {
-                        const x = obj.x - 12;
-                        const y = obj.y - 50;
-                        
-                        reaction.style.left = x + 'px';
-                        reaction.style.top = y + 'px';
-                        foundPlayer = true;
-                    }
-                }
-            });
-            
-            if (!foundPlayer) {
-                reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
-                reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
-            }
-            
-            gameArea.appendChild(reaction);
-            
-            setTimeout(() => {
-                if (reaction.parentNode) {
-                    reaction.parentNode.removeChild(reaction);
-                }
-            }, 3000);
-        }
-        
         function displayMessages(messages) {
-            const chatMessages = elements.chatMessages;
+            const chatMessages = document.getElementById('chat-messages');
             if (!chatMessages) return;
             
             chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div></div>';
@@ -1314,6 +1116,7 @@
                 startBtn.addEventListener('click', startGame);
             }
             
+            // ウィンドウリサイズ対応
             window.addEventListener('resize', () => {
                 if (state.gameInstance) {
                     const gameArea = elements.gameArea;
@@ -1328,7 +1131,7 @@
         function initialize() {
             if (state.isInitialized) return;
             
-            console.log('🦔 Initializing Harinezumi Cafe (Firebase Version)...');
+            console.log('🦔 Initializing Harinezumi Cafe (Fixed Boundary Version)...');
             
             if (!checkCompanyAccess()) {
                 return;
@@ -1348,7 +1151,7 @@
             initialize();
         }
         
-        console.log('🦔 Harinezumi Cafe Firebase script loaded');
+        console.log('🦔 Harinezumi Cafe Fixed Boundary script loaded');
     </script>
 </body>
 </html>
