@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ハリネズミカフェ</title>
+    <title>ハリネズミカフェ バーチャルオフィス</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
@@ -718,4 +718,524 @@
                     const floorPlank = this.add.graphics();
                     floorPlank.fillStyle(0xCD853F);
                     floorPlank.fillRect(i, height - 150, 38, 150);
-                    floorPlank.fillStyle(0xA0522D);
+                    floorPlank.fillRect(i, height - 150, 2, 150);
+                    floorPlank.fillRect(i + 36, height - 150, 2, 150);
+                    floorPlank.setDepth(-90);
+                }
+                
+                // レトロな壁紙
+                for (let x = 0; x < width; x += 60) {
+                    for (let y = 0; y < height - 150; y += 80) {
+                        const wallpaper = this.add.graphics();
+                        wallpaper.fillStyle(0xF5DEB3);
+                        wallpaper.fillRect(x, y, 60, 80);
+                        wallpaper.lineStyle(2, 0xDEB887);
+                        wallpaper.strokeRect(x + 5, y + 5, 50, 70);
+                        wallpaper.fillStyle(0xD2691E);
+                        wallpaper.fillCircle(x + 30, y + 40, 8);
+                        wallpaper.setDepth(-95);
+                    }
+                }
+                
+                // 本棚（左右）
+                this.createBookshelf(50, 50, 120, height - 250);
+                this.createBookshelf(width - 170, 50, 120, height - 250);
+                
+                // 中央の日付表示
+                const today = new Date();
+                const dateStr = today.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                
+                const dateX = width / 2;
+                const dateY = 80;
+                const datePoster = this.add.graphics();
+                datePoster.fillStyle(0x8B4513);
+                datePoster.fillRoundedRect(dateX - 100, dateY - 25, 200, 50, 15);
+                datePoster.fillStyle(0xF5DEB3);
+                datePoster.fillRoundedRect(dateX - 95, dateY - 20, 190, 40, 10);
+                datePoster.lineStyle(3, 0xD2691E);
+                datePoster.strokeRoundedRect(dateX - 90, dateY - 15, 180, 30, 8);
+                datePoster.setDepth(10);
+                
+                const dateText = this.add.text(dateX, dateY, `📅 ${dateStr}`, {
+                    fontSize: '14px',
+                    fill: '#8B4513',
+                    align: 'center',
+                    fontFamily: 'Noto Sans JP'
+                });
+                dateText.setOrigin(0.5);
+                dateText.setDepth(15);
+            };
+            
+            Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
+                // 本棚フレーム
+                const shelf = this.add.graphics();
+                shelf.fillStyle(0x8B4513);
+                shelf.fillRect(x, y, width, height);
+                shelf.fillStyle(0xA0522D);
+                shelf.fillRect(x + 5, y + 5, width - 10, height - 10);
+                
+                const shelfCount = 6;
+                for (let i = 1; i < shelfCount; i++) {
+                    const shelfY = y + (height / shelfCount) * i;
+                    shelf.fillStyle(0x8B4513);
+                    shelf.fillRect(x, shelfY - 3, width, 6);
+                }
+                shelf.setDepth(5);
+                
+                // 本の配置
+                for (let shelfLevel = 0; shelfLevel < shelfCount; shelfLevel++) {
+                    const shelfTop = y + (height / shelfCount) * shelfLevel + 10;
+                    const shelfBottom = y + (height / shelfCount) * (shelfLevel + 1) - 10;
+                    const bookHeight = shelfBottom - shelfTop - 5;
+                    
+                    let bookX = x + 10;
+                    while (bookX < x + width - 20) {
+                        const bookWidth = 8 + Math.random() * 12;
+                        const bookColor = this.getRandomBookColor();
+                        
+                        const book = this.add.rectangle(
+                            bookX + bookWidth/2, 
+                            shelfTop + bookHeight/2, 
+                            bookWidth, 
+                            bookHeight, 
+                            bookColor
+                        );
+                        book.setDepth(6);
+                        
+                        bookX += bookWidth + 2;
+                    }
+                }
+            };
+            
+            Phaser.Scene.prototype.getRandomBookColor = function() {
+                const colors = [0x8B0000, 0x006400, 0x4B0082, 0x8B4513, 0x2F4F4F, 0x800080, 0x008080, 0xB8860B];
+                return colors[Math.floor(Math.random() * colors.length)];
+            };
+
+            function setupFirebaseConnection() {
+                console.log('🔥 Setting up Firebase connection...');
+                
+                const playersRef = ref(database, 'players');
+                const messagesRef = ref(database, 'messages');
+                const reactionsRef = ref(database, 'reactions');
+                
+                // プレイヤー情報を登録
+                const playerRef = ref(database, `players/${state.playerId}`);
+                set(playerRef, {
+                    x: player.x,
+                    y: player.y,
+                    mugColor: state.selectedMugColor,
+                    deviceId: state.deviceId,
+                    userName: state.userName,
+                    timestamp: serverTimestamp(),
+                    lastUpdate: serverTimestamp()
+                }).then(() => {
+                    console.log('✅ Firebase connection successful');
+                    state.isFirebaseReady = true;
+                }).catch((error) => {
+                    console.error('❌ Firebase connection failed:', error);
+                    state.isFirebaseReady = false;
+                });
+                
+                // 切断時の処理
+                onDisconnect(playerRef).remove();
+                
+                // プレイヤー監視（リアルタイム更新）
+                onValue(playersRef, (snapshot) => {
+                    const players = snapshot.val();
+                    const onlineCount = players ? Object.keys(players).length : 0;
+                    
+                    // オンライン人数更新
+                    const userCountElement = document.getElementById('user-count');
+                    if (userCountElement) {
+                        userCountElement.textContent = onlineCount;
+                    }
+                    
+                    if (players) {
+                        // 他のプレイヤーを表示
+                        Object.keys(players).forEach(id => {
+                            if (id !== state.playerId) {
+                                updateOtherPlayer.call(state.gameScene, id, players[id]);
+                            }
+                        });
+                        
+                        // 退室したプレイヤーを削除
+                        Object.keys(otherPlayers).forEach(id => {
+                            if (!players[id]) {
+                                if (otherPlayers[id]) {
+                                    otherPlayers[id].destroy();
+                                    delete otherPlayers[id];
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // メッセージ監視
+                onValue(messagesRef, (snapshot) => {
+                    const messages = snapshot.val();
+                    if (messages) {
+                        const sessionMessages = Object.values(messages)
+                            .filter(message => message.timestamp >= state.sessionStartTime)
+                            .sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        displayMessages(sessionMessages);
+                    } else {
+                        displayMessages([]);
+                    }
+                });
+                
+                // リアクション監視
+                onValue(reactionsRef, (snapshot) => {
+                    const reactions = snapshot.val();
+                    if (reactions) {
+                        Object.values(reactions).forEach(reaction => {
+                            if (reaction.playerId !== state.playerId && 
+                                Date.now() - reaction.timestamp < 5000) {
+                                showReactionAnimation(reaction);
+                            }
+                        });
+                    }
+                });
+            }
+
+            function updateOtherPlayer(id, data) {
+                if (!otherPlayers[id]) {
+                    const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
+                    
+                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
+                    otherPlayers[id].setScale(1.0);
+                    otherPlayers[id].setAlpha(0.9);
+                    otherPlayers[id].setDepth(200);
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                } else {
+                    otherPlayers[id].x = data.x;
+                    otherPlayers[id].y = data.y;
+                    otherPlayers[id].userName = data.userName || 'ゲスト';
+                }
+            }
+
+            function update() {
+                const speed = 3;
+                let moved = false;
+                const gameWidth = this.cameras.main.width;
+                
+                if (cursors.left.isDown && player.x > 50) {
+                    player.x -= speed;
+                    moved = true;
+                }
+                if (cursors.right.isDown && player.x < gameWidth - 50) {
+                    player.x += speed;
+                    moved = true;
+                }
+                
+                // プレイヤー位置をFirebaseに送信
+                if (moved && state.isFirebaseReady) {
+                    const playerRef = ref(database, `players/${state.playerId}`);
+                    set(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        mugColor: state.selectedMugColor,
+                        deviceId: state.deviceId,
+                        userName: state.userName,
+                        timestamp: serverTimestamp(),
+                        lastUpdate: serverTimestamp()
+                    });
+                }
+            }
+
+            state.gameInstance = new Phaser.Game(config);
+        }
+
+        // チャット機能（Firebase版）
+        function setupChat() {
+            const chatInput = document.getElementById('chat-input');
+            const reactionButtons = document.querySelector('.reaction-buttons');
+            
+            if (chatInput) {
+                chatInput.addEventListener('keypress', handleChatKeypress);
+            }
+            
+            if (reactionButtons) {
+                reactionButtons.addEventListener('click', handleReactionClick);
+            }
+            
+            displayMessages([]);
+        }
+        
+        function handleChatKeypress(e) {
+            if (e.key === 'Enter') {
+                const message = e.target.value.trim();
+                
+                if (message && state.isFirebaseReady) {
+                    sendMessage(message);
+                    e.target.value = '';
+                } else if (!state.isFirebaseReady) {
+                    console.warn('Firebase not ready, message not sent');
+                }
+            }
+        }
+        
+        function handleReactionClick(e) {
+            if (e.target.classList.contains('reaction-btn')) {
+                const reaction = e.target.getAttribute('data-reaction');
+                if (state.isFirebaseReady) {
+                    sendReaction(reaction);
+                }
+            }
+        }
+        
+        function sendMessage(text) {
+            if (!text || !text.trim() || !state.isFirebaseReady) return;
+            
+            const messagesRef = ref(database, 'messages');
+            const messageRef = push(messagesRef);
+            
+            const messageData = {
+                playerId: state.playerId,
+                userName: state.userName,
+                text: text.trim(),
+                timestamp: Date.now(),
+                mugColor: state.selectedMugColor
+            };
+            
+            set(messageRef, messageData).then(() => {
+                console.log('✅ Message sent successfully');
+                showSpeechBubble(text);
+            }).catch((error) => {
+                console.error('❌ Message send failed:', error);
+            });
+        }
+        
+        function sendReaction(emoji) {
+            if (!state.isFirebaseReady) return;
+            
+            const reactionsRef = ref(database, 'reactions');
+            const reactionRef = push(reactionsRef);
+            
+            set(reactionRef, {
+                playerId: state.playerId,
+                userName: state.userName,
+                emoji: emoji,
+                timestamp: Date.now(),
+                mugColor: state.selectedMugColor
+            });
+            
+            showLocalReactionAnimation(emoji);
+        }
+        
+        function showSpeechBubble(text) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = text;
+            
+            // プレイヤーの実際の位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            const player = scene.children.list.find(obj => obj.playerId === state.playerId);
+            
+            if (player) {
+                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 100));
+                const y = Math.max(10, player.y - 80);
+                
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+            } else {
+                bubble.style.left = '100px';
+                bubble.style.top = '350px';
+            }
+            
+            gameArea.appendChild(bubble);
+            state.speechBubbles.push(bubble);
+            
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    const index = state.speechBubbles.indexOf(bubble);
+                    if (index > -1) {
+                        state.speechBubbles.splice(index, 1);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function showLocalReactionAnimation(emoji) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = emoji;
+            
+            // プレイヤーの実際の位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            const player = scene.children.list.find(obj => obj.playerId === state.playerId);
+            
+            if (player) {
+                const x = player.x - 12;
+                const y = player.y - 50;
+                
+                reaction.style.left = x + 'px';
+                reaction.style.top = y + 'px';
+            } else {
+                reaction.style.left = '100px';
+                reaction.style.top = '300px';
+            }
+            
+            gameArea.appendChild(reaction);
+            state.reactionAnimations.push(reaction);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+                const index = state.reactionAnimations.indexOf(reaction);
+                if (index > -1) {
+                    state.reactionAnimations.splice(index, 1);
+                }
+            }, 3000);
+        }
+        
+        function showReactionAnimation(reactionData) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-animation';
+            reaction.textContent = reactionData.emoji;
+            
+            // 他のプレイヤーの位置を取得
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            let foundPlayer = false;
+            
+            scene.children.list.forEach(obj => {
+                if (obj.texture && obj.texture.key.startsWith('mug-') && obj.userName) {
+                    if (obj.userName === reactionData.userName) {
+                        const x = obj.x - 12;
+                        const y = obj.y - 50;
+                        
+                        reaction.style.left = x + 'px';
+                        reaction.style.top = y + 'px';
+                        foundPlayer = true;
+                    }
+                }
+            });
+            
+            if (!foundPlayer) {
+                reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
+                reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
+            }
+            
+            gameArea.appendChild(reaction);
+            
+            setTimeout(() => {
+                if (reaction.parentNode) {
+                    reaction.parentNode.removeChild(reaction);
+                }
+            }, 3000);
+        }
+        
+        function displayMessages(messages) {
+            const chatMessages = elements.chatMessages;
+            if (!chatMessages) return;
+            
+            chatMessages.innerHTML = '<div class="message"><div class="message-author">システム</div><div class="message-text">ハリネズミカフェへようこそ！メッセージやリアクションで交流しましょう。</div></div>';
+            
+            if (messages && messages.length > 0) {
+                messages.slice(-20).forEach(message => {
+                    if (!message.text || !message.userName) return;
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message';
+                    
+                    const author = document.createElement('div');
+                    author.className = 'message-author';
+                    author.textContent = `🦔 ${message.userName}`;
+                    author.style.color = message.mugColor || '#8B4513';
+                    
+                    const text = document.createElement('div');
+                    text.className = 'message-text';
+                    text.textContent = message.text;
+                    
+                    messageDiv.appendChild(author);
+                    messageDiv.appendChild(text);
+                    chatMessages.appendChild(messageDiv);
+                });
+            }
+            
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        // イベントリスナー設定
+        function setupEventListeners() {
+            const nameInput = elements.nameInput;
+            const nameNextBtn = elements.nameNextBtn;
+            const startBtn = elements.startBtn;
+            
+            if (nameInput) {
+                nameInput.addEventListener('input', updateNameButton);
+                nameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && nameInput.value.trim()) {
+                        goToMugSelection();
+                    }
+                });
+            }
+            
+            if (nameNextBtn) {
+                nameNextBtn.addEventListener('click', goToMugSelection);
+            }
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', startGame);
+            }
+            
+            window.addEventListener('resize', () => {
+                if (state.gameInstance) {
+                    const gameArea = elements.gameArea;
+                    if (gameArea) {
+                        state.gameInstance.scale.resize(gameArea.clientWidth, gameArea.clientHeight);
+                    }
+                }
+            });
+        }
+
+        // メイン初期化
+        function initialize() {
+            if (state.isInitialized) return;
+            
+            console.log('🦔 Initializing Harinezumi Cafe (Firebase Version)...');
+            
+            if (!checkCompanyAccess()) {
+                return;
+            }
+            
+            setupEventListeners();
+            showNameScreen();
+            
+            state.isInitialized = true;
+            console.log('✅ Initialization complete');
+        }
+
+        // DOM読み込み完了後に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+        
+        console.log('🦔 Harinezumi Cafe Firebase script loaded');
+    </script>
+</body>
+</html>
