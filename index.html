@@ -378,11 +378,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
         
-        // 🔥 Firebase設定（あなたの実際の設定）
+        // 🔥 Firebase設定（修正版）
         const firebaseConfig = {
             apiKey: "AIzaSyCW5Z22SV6NE41EEg_KyTzabfySNM3smEk",
             authDomain: "harinezumi-cafe.firebaseapp.com",
-            databaseURL: "https://harinezumi-cafe-default-rtdb.asia-southeast1.firebaseapp.com",
+            databaseURL: "https://harinezumi-cafe-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "harinezumi-cafe",
             storageBucket: "harinezumi-cafe.firebasestorage.app",
             messagingSenderId: "102145355730",
@@ -820,88 +820,124 @@
             function setupFirebaseConnection() {
                 console.log('🔥 Setting up Firebase connection...');
                 
-                const playersRef = ref(database, 'players');
-                const messagesRef = ref(database, 'messages');
-                const reactionsRef = ref(database, 'reactions');
-                
-                // プレイヤー情報を登録
-                const playerRef = ref(database, `players/${state.playerId}`);
-                set(playerRef, {
-                    x: player.x,
-                    y: player.y,
-                    mugColor: state.selectedMugColor,
-                    deviceId: state.deviceId,
-                    userName: state.userName,
-                    timestamp: serverTimestamp(),
-                    lastUpdate: serverTimestamp()
-                }).then(() => {
-                    console.log('✅ Firebase connection successful');
-                    state.isFirebaseReady = true;
-                }).catch((error) => {
-                    console.error('❌ Firebase connection failed:', error);
+                try {
+                    const playersRef = ref(database, 'players');
+                    const messagesRef = ref(database, 'messages');
+                    const reactionsRef = ref(database, 'reactions');
+                    
+                    // プレイヤー情報を登録
+                    const playerRef = ref(database, `players/${state.playerId}`);
+                    set(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        mugColor: state.selectedMugColor,
+                        deviceId: state.deviceId,
+                        userName: state.userName,
+                        timestamp: Date.now(),
+                        lastUpdate: Date.now()
+                    }).then(() => {
+                        console.log('✅ Firebase connection successful');
+                        state.isFirebaseReady = true;
+                        
+                        // 接続成功後にUI更新
+                        const userCountElement = document.getElementById('user-count');
+                        if (userCountElement) {
+                            userCountElement.textContent = '1';
+                        }
+                    }).catch((error) => {
+                        console.error('❌ Firebase connection failed:', error);
+                        state.isFirebaseReady = false;
+                        
+                        // 接続失敗時はオフラインモード
+                        const userCountElement = document.getElementById('user-count');
+                        if (userCountElement) {
+                            userCountElement.textContent = '1 (オフライン)';
+                        }
+                    });
+                    
+                    // 切断時の処理
+                    onDisconnect(playerRef).remove();
+                    
+                    // プレイヤー監視（リアルタイム更新）
+                    onValue(playersRef, (snapshot) => {
+                        try {
+                            const players = snapshot.val();
+                            const onlineCount = players ? Object.keys(players).length : 0;
+                            
+                            // オンライン人数更新
+                            const userCountElement = document.getElementById('user-count');
+                            if (userCountElement) {
+                                userCountElement.textContent = onlineCount;
+                            }
+                            
+                            if (players) {
+                                // 他のプレイヤーを表示
+                                Object.keys(players).forEach(id => {
+                                    if (id !== state.playerId) {
+                                        updateOtherPlayer.call(state.gameScene, id, players[id]);
+                                    }
+                                });
+                                
+                                // 退室したプレイヤーを削除
+                                Object.keys(otherPlayers).forEach(id => {
+                                    if (!players[id]) {
+                                        if (otherPlayers[id]) {
+                                            otherPlayers[id].destroy();
+                                            delete otherPlayers[id];
+                                        }
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn('Players update error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Players listener error:', error);
+                    });
+                    
+                    // メッセージ監視
+                    onValue(messagesRef, (snapshot) => {
+                        try {
+                            const messages = snapshot.val();
+                            if (messages) {
+                                const sessionMessages = Object.values(messages)
+                                    .filter(message => message.timestamp >= state.sessionStartTime)
+                                    .sort((a, b) => a.timestamp - b.timestamp);
+                                
+                                displayMessages(sessionMessages);
+                            } else {
+                                displayMessages([]);
+                            }
+                        } catch (error) {
+                            console.error('Messages listener error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Messages listener error:', error);
+                    });
+                    
+                    // リアクション監視
+                    onValue(reactionsRef, (snapshot) => {
+                        try {
+                            const reactions = snapshot.val();
+                            if (reactions) {
+                                Object.values(reactions).forEach(reaction => {
+                                    if (reaction.playerId !== state.playerId && 
+                                        Date.now() - reaction.timestamp < 5000) {
+                                        showReactionAnimation(reaction);
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn('Reactions listener error:', error);
+                        }
+                    }, (error) => {
+                        console.error('Reactions listener error:', error);
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Firebase setup error:', error);
                     state.isFirebaseReady = false;
-                });
-                
-                // 切断時の処理
-                onDisconnect(playerRef).remove();
-                
-                // プレイヤー監視（リアルタイム更新）
-                onValue(playersRef, (snapshot) => {
-                    const players = snapshot.val();
-                    const onlineCount = players ? Object.keys(players).length : 0;
-                    
-                    // オンライン人数更新
-                    const userCountElement = document.getElementById('user-count');
-                    if (userCountElement) {
-                        userCountElement.textContent = onlineCount;
-                    }
-                    
-                    if (players) {
-                        // 他のプレイヤーを表示
-                        Object.keys(players).forEach(id => {
-                            if (id !== state.playerId) {
-                                updateOtherPlayer.call(state.gameScene, id, players[id]);
-                            }
-                        });
-                        
-                        // 退室したプレイヤーを削除
-                        Object.keys(otherPlayers).forEach(id => {
-                            if (!players[id]) {
-                                if (otherPlayers[id]) {
-                                    otherPlayers[id].destroy();
-                                    delete otherPlayers[id];
-                                }
-                            }
-                        });
-                    }
-                });
-                
-                // メッセージ監視
-                onValue(messagesRef, (snapshot) => {
-                    const messages = snapshot.val();
-                    if (messages) {
-                        const sessionMessages = Object.values(messages)
-                            .filter(message => message.timestamp >= state.sessionStartTime)
-                            .sort((a, b) => a.timestamp - b.timestamp);
-                        
-                        displayMessages(sessionMessages);
-                    } else {
-                        displayMessages([]);
-                    }
-                });
-                
-                // リアクション監視
-                onValue(reactionsRef, (snapshot) => {
-                    const reactions = snapshot.val();
-                    if (reactions) {
-                        Object.values(reactions).forEach(reaction => {
-                            if (reaction.playerId !== state.playerId && 
-                                Date.now() - reaction.timestamp < 5000) {
-                                showReactionAnimation(reaction);
-                            }
-                        });
-                    }
-                });
+                }
             }
 
             function updateOtherPlayer(id, data) {
@@ -936,16 +972,20 @@
                 
                 // プレイヤー位置をFirebaseに送信
                 if (moved && state.isFirebaseReady) {
-                    const playerRef = ref(database, `players/${state.playerId}`);
-                    set(playerRef, {
-                        x: player.x,
-                        y: player.y,
-                        mugColor: state.selectedMugColor,
-                        deviceId: state.deviceId,
-                        userName: state.userName,
-                        timestamp: serverTimestamp(),
-                        lastUpdate: serverTimestamp()
-                    });
+                    try {
+                        const playerRef = ref(database, `players/${state.playerId}`);
+                        set(playerRef, {
+                            x: player.x,
+                            y: player.y,
+                            mugColor: state.selectedMugColor,
+                            deviceId: state.deviceId,
+                            userName: state.userName,
+                            timestamp: Date.now(),
+                            lastUpdate: Date.now()
+                        });
+                    } catch (error) {
+                        console.warn('Player position update error:', error);
+                    }
                 }
             }
 
@@ -972,11 +1012,10 @@
             if (e.key === 'Enter') {
                 const message = e.target.value.trim();
                 
-                if (message && state.isFirebaseReady) {
+                if (message) {
+                    console.log('🔤 Enter pressed with message:', message);
                     sendMessage(message);
                     e.target.value = '';
-                } else if (!state.isFirebaseReady) {
-                    console.warn('Firebase not ready, message not sent');
                 }
             }
         }
@@ -984,49 +1023,79 @@
         function handleReactionClick(e) {
             if (e.target.classList.contains('reaction-btn')) {
                 const reaction = e.target.getAttribute('data-reaction');
-                if (state.isFirebaseReady) {
-                    sendReaction(reaction);
-                }
+                console.log('👆 Reaction button clicked:', reaction);
+                sendReaction(reaction);
             }
         }
         
         function sendMessage(text) {
-            if (!text || !text.trim() || !state.isFirebaseReady) return;
+            if (!text || !text.trim()) return;
             
-            const messagesRef = ref(database, 'messages');
-            const messageRef = push(messagesRef);
+            console.log('💬 Attempting to send message:', text);
             
-            const messageData = {
-                playerId: state.playerId,
-                userName: state.userName,
-                text: text.trim(),
-                timestamp: Date.now(),
-                mugColor: state.selectedMugColor
-            };
-            
-            set(messageRef, messageData).then(() => {
-                console.log('✅ Message sent successfully');
+            if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, using local display only');
+                // Firebase未接続時はローカル表示のみ
                 showSpeechBubble(text);
-            }).catch((error) => {
-                console.error('❌ Message send failed:', error);
-            });
+                return;
+            }
+            
+            try {
+                const messagesRef = ref(database, 'messages');
+                const messageRef = push(messagesRef);
+                
+                const messageData = {
+                    playerId: state.playerId,
+                    userName: state.userName,
+                    text: text.trim(),
+                    timestamp: Date.now(),
+                    mugColor: state.selectedMugColor
+                };
+                
+                set(messageRef, messageData).then(() => {
+                    console.log('✅ Message sent successfully');
+                    showSpeechBubble(text);
+                }).catch((error) => {
+                    console.error('❌ Message send failed:', error);
+                    // エラー時もローカル表示
+                    showSpeechBubble(text);
+                });
+            } catch (error) {
+                console.error('❌ Send message error:', error);
+                // エラー時もローカル表示
+                showSpeechBubble(text);
+            }
         }
         
         function sendReaction(emoji) {
-            if (!state.isFirebaseReady) return;
+            console.log('😊 Attempting to send reaction:', emoji);
             
-            const reactionsRef = ref(database, 'reactions');
-            const reactionRef = push(reactionsRef);
-            
-            set(reactionRef, {
-                playerId: state.playerId,
-                userName: state.userName,
-                emoji: emoji,
-                timestamp: Date.now(),
-                mugColor: state.selectedMugColor
-            });
-            
+            // 常にローカルアニメーション表示
             showLocalReactionAnimation(emoji);
+            
+            if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, local reaction only');
+                return;
+            }
+            
+            try {
+                const reactionsRef = ref(database, 'reactions');
+                const reactionRef = push(reactionsRef);
+                
+                set(reactionRef, {
+                    playerId: state.playerId,
+                    userName: state.userName,
+                    emoji: emoji,
+                    timestamp: Date.now(),
+                    mugColor: state.selectedMugColor
+                }).then(() => {
+                    console.log('✅ Reaction sent successfully');
+                }).catch((error) => {
+                    console.error('❌ Reaction send failed:', error);
+                });
+            } catch (error) {
+                console.warn('Send reaction error:', error);
+            }
         }
         
         function showSpeechBubble(text) {
