@@ -480,22 +480,9 @@
             `;
         }
 
-        // 会社コードチェック
+        // 会社コードチェック（無効化）
         function checkCompanyAccess() {
-            let entryCode = localStorage.getItem('company-entry-code');
-            
-            if (!entryCode || entryCode !== COMPANY_CODE) {
-                entryCode = prompt('🔐 会社アクセスコードを入力してください:\n\n※このアプリは社内利用限定です');
-                
-                if (!entryCode || entryCode !== COMPANY_CODE) {
-                    alert('❌ アクセスが許可されていません。\n正しいアクセスコードを入力してください。');
-                    return false;
-                }
-                
-                localStorage.setItem('company-entry-code', entryCode);
-                alert('✅ アクセスが承認されました。ハリネズミカフェへようこそ！');
-            }
-            
+            // パスワード制限を無効化 - 常にtrueを返す
             return true;
         }
 
@@ -723,18 +710,18 @@
                     floorPlank.setDepth(-90);
                 }
                 
-                // レトロな壁紙
-                for (let x = 0; x < width; x += 60) {
-                    for (let y = 0; y < height - 150; y += 80) {
-                        const wallpaper = this.add.graphics();
-                        wallpaper.fillStyle(0xF5DEB3);
-                        wallpaper.fillRect(x, y, 60, 80);
-                        wallpaper.lineStyle(2, 0xDEB887);
-                        wallpaper.strokeRect(x + 5, y + 5, 50, 70);
-                        wallpaper.fillStyle(0xD2691E);
-                        wallpaper.fillCircle(x + 30, y + 40, 8);
-                        wallpaper.setDepth(-95);
+                // ストライプ壁紙
+                const stripeWidth = 30; // ストライプの幅
+                for (let x = 0; x < width; x += stripeWidth) {
+                    const stripe = this.add.graphics();
+                    // 交互に色を変える
+                    if ((x / stripeWidth) % 2 === 0) {
+                        stripe.fillStyle(0xF5DEB3); // 薄いベージュ
+                    } else {
+                        stripe.fillStyle(0xE6D3A3); // 少し濃いベージュ
                     }
+                    stripe.fillRect(x, 0, stripeWidth, height - 150);
+                    stripe.setDepth(-95);
                 }
                 
                 // 本棚（左右）
