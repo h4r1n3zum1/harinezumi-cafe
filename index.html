@@ -685,17 +685,17 @@
                 // 背景作成
                 this.createCafeBackground(gameWidth, gameHeight);
                 
-                // テーブル配置
+                // テーブル配置（固定位置で統一）
                 const tableY = gameHeight - 120;
                 const table = this.add.image(gameWidth / 2, tableY, 'cafe-table');
                 table.setDisplaySize(gameWidth - 40, 120);
                 table.setDepth(1);
                 
-                // プレイヤー作成（画面内の安全な位置に配置）
-                const startX = Math.max(50, Math.min(gameWidth - 50, 100 + Math.random() * 200));
-                const playerY = tableY - 40;
+                // プレイヤー作成（テーブル上の固定Y座標で統一）
+                const fixedPlayerY = tableY - 40; // テーブルからの固定距離
+                const startX = Math.max(100, Math.min(gameWidth - 100, gameWidth * 0.3)); // 画面幅の30%位置
                 
-                player = this.add.sprite(startX, playerY, 'player-mug');
+                player = this.add.sprite(startX, fixedPlayerY, 'player-mug');
                 player.setScale(1.0);
                 player.playerId = state.playerId;
                 player.setDepth(200);
@@ -905,6 +905,16 @@
                                     .sort((a, b) => a.timestamp - b.timestamp);
                                 
                                 displayMessages(sessionMessages);
+                                
+                                // 新しいメッセージの吹き出し表示
+                                const recentMessages = sessionMessages.filter(message => 
+                                    Date.now() - message.timestamp < 5000 && 
+                                    message.playerId !== state.playerId
+                                );
+                                
+                                recentMessages.forEach(message => {
+                                    showOtherPlayerSpeechBubble(message);
+                                });
                             } else {
                                 displayMessages([]);
                             }
@@ -923,7 +933,7 @@
                                 Object.values(reactions).forEach(reaction => {
                                     if (reaction.playerId !== state.playerId && 
                                         Date.now() - reaction.timestamp < 5000) {
-                                        showReactionAnimation(reaction);
+                                        showOtherPlayerReactionAnimation(reaction);
                                     }
                                 });
                             }
@@ -941,17 +951,28 @@
             }
 
             function updateOtherPlayer(id, data) {
+                const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
+                const tableY = gameHeight - 120;
+                const fixedPlayerY = tableY - 40;
+                
                 if (!otherPlayers[id]) {
                     const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
                     
-                    otherPlayers[id] = this.add.sprite(data.x, data.y, `mug-${mugColorIndex}`);
+                    // 他のプレイヤーも同じY座標（テーブル上）に配置
+                    const safeX = Math.max(100, Math.min(gameWidth - 100, data.x));
+                    
+                    otherPlayers[id] = this.add.sprite(safeX, fixedPlayerY, `mug-${mugColorIndex}`);
                     otherPlayers[id].setScale(1.0);
                     otherPlayers[id].setAlpha(0.9);
                     otherPlayers[id].setDepth(200);
                     otherPlayers[id].userName = data.userName || 'ゲスト';
+                    otherPlayers[id].playerId = id;
                 } else {
-                    otherPlayers[id].x = data.x;
-                    otherPlayers[id].y = data.y;
+                    // X座標のみ更新、Y座標は固定
+                    const safeX = Math.max(100, Math.min(gameWidth - 100, data.x));
+                    otherPlayers[id].x = safeX;
+                    otherPlayers[id].y = fixedPlayerY; // Y座標は常に固定
                     otherPlayers[id].userName = data.userName || 'ゲスト';
                 }
             }
@@ -960,14 +981,20 @@
                 const speed = 3;
                 let moved = false;
                 const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
+                const tableY = gameHeight - 120;
+                const fixedPlayerY = tableY - 40;
+                
+                // Y座標を固定位置に維持
+                player.y = fixedPlayerY;
                 
                 // 左右移動のみ（元の仕様通り） + 画面外に出ないよう境界制限
-                if (cursors.left.isDown && player.x > 50) {
-                    player.x = Math.max(50, player.x - speed);
+                if (cursors.left.isDown && player.x > 100) {
+                    player.x = Math.max(100, player.x - speed);
                     moved = true;
                 }
-                if (cursors.right.isDown && player.x < gameWidth - 50) {
-                    player.x = Math.min(gameWidth - 50, player.x + speed);
+                if (cursors.right.isDown && player.x < gameWidth - 100) {
+                    player.x = Math.min(gameWidth - 100, player.x + speed);
                     moved = true;
                 }
                 
@@ -977,7 +1004,7 @@
                         const playerRef = ref(database, `players/${state.playerId}`);
                         set(playerRef, {
                             x: player.x,
-                            y: player.y,
+                            y: player.y, // 固定Y座標を送信
                             mugColor: state.selectedMugColor,
                             deviceId: state.deviceId,
                             userName: state.userName,
@@ -1202,7 +1229,70 @@
             }, 3000);
         }
         
-        function showReactionAnimation(reactionData) {
+        function showOtherPlayerSpeechBubble(messageData) {
+            if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
+            
+            const gameArea = elements.gameArea;
+            const bubble = document.createElement('div');
+            bubble.className = 'speech-bubble';
+            bubble.textContent = messageData.text;
+            
+            const scene = state.gameScene.sys.game.scene.scenes[0];
+            let targetPlayer = null;
+            
+            // 他のプレイヤーを探す
+            Object.values(scene.children.list).forEach(obj => {
+                if (obj.playerId === messageData.playerId) {
+                    targetPlayer = obj;
+                }
+            });
+            
+            if (targetPlayer) {
+                // 画面内に収まるように位置調整
+                const x = Math.max(10, Math.min(gameArea.clientWidth - 210, targetPlayer.x - 85));
+                const y = Math.max(10, targetPlayer.y - 100);
+                
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+                bubble.followPlayer = targetPlayer;
+            } else {
+                // プレイヤーが見つからない場合はランダム位置
+                bubble.style.left = (Math.random() * (gameArea.clientWidth - 200)) + 'px';
+                bubble.style.top = (gameArea.clientHeight - 300 + Math.random() * 100) + 'px';
+            }
+            
+            gameArea.appendChild(bubble);
+            state.speechBubbles.push(bubble);
+            
+            function updateBubblePosition() {
+                if (bubble.followPlayer && bubble.parentNode) {
+                    const newX = Math.max(10, Math.min(gameArea.clientWidth - 210, bubble.followPlayer.x - 85));
+                    const newY = Math.max(10, bubble.followPlayer.y - 100);
+                    
+                    bubble.style.left = newX + 'px';
+                    bubble.style.top = newY + 'px';
+                    
+                    requestAnimationFrame(updateBubblePosition);
+                }
+            }
+            
+            requestAnimationFrame(updateBubblePosition);
+            
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-in';
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    const index = state.speechBubbles.indexOf(bubble);
+                    if (index > -1) {
+                        state.speechBubbles.splice(index, 1);
+                    }
+                }, 500);
+            }, 4000);
+        }
+        
+        function showOtherPlayerReactionAnimation(reactionData) {
             if (!state.gameScene || !state.gameScene.sys.game.scene.scenes[0]) return;
             
             const gameArea = elements.gameArea;
@@ -1211,31 +1301,53 @@
             reaction.textContent = reactionData.emoji;
             
             const scene = state.gameScene.sys.game.scene.scenes[0];
-            let foundPlayer = false;
+            let targetPlayer = null;
             
-            scene.children.list.forEach(obj => {
-                if (obj.texture && obj.texture.key.startsWith('mug-') && obj.userName) {
-                    if (obj.userName === reactionData.userName) {
-                        const x = Math.max(20, Math.min(gameArea.clientWidth - 20, obj.x - 12));
-                        const y = Math.max(20, obj.y - 50);
-                        
-                        reaction.style.left = x + 'px';
-                        reaction.style.top = y + 'px';
-                        foundPlayer = true;
-                    }
+            // 他のプレイヤーを探す
+            Object.values(scene.children.list).forEach(obj => {
+                if (obj.playerId === reactionData.playerId) {
+                    targetPlayer = obj;
                 }
             });
             
-            if (!foundPlayer) {
+            if (targetPlayer) {
+                // 画面内に収まるように位置調整
+                const x = Math.max(20, Math.min(gameArea.clientWidth - 20, targetPlayer.x - 12));
+                const y = Math.max(20, targetPlayer.y - 70);
+                
+                reaction.style.left = x + 'px';
+                reaction.style.top = y + 'px';
+                reaction.followPlayer = targetPlayer;
+            } else {
+                // プレイヤーが見つからない場合はランダム位置
                 reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
                 reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
             }
             
             gameArea.appendChild(reaction);
+            state.reactionAnimations.push(reaction);
+            
+            function updateReactionPosition() {
+                if (reaction.followPlayer && reaction.parentNode) {
+                    const newX = Math.max(20, Math.min(gameArea.clientWidth - 20, reaction.followPlayer.x - 12));
+                    const newY = Math.max(20, reaction.followPlayer.y - 70);
+                    
+                    reaction.style.left = newX + 'px';
+                    reaction.style.top = newY + 'px';
+                    
+                    requestAnimationFrame(updateReactionPosition);
+                }
+            }
+            
+            requestAnimationFrame(updateReactionPosition);
             
             setTimeout(() => {
                 if (reaction.parentNode) {
                     reaction.parentNode.removeChild(reaction);
+                }
+                const index = state.reactionAnimations.indexOf(reaction);
+                if (index > -1) {
+                    state.reactionAnimations.splice(index, 1);
                 }
             }, 3000);
         }
