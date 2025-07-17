@@ -858,6 +858,16 @@
                             }
                             
                             if (players) {
+                                // 古いプレイヤーデータを自動削除（30秒以上更新がない場合）
+                                const currentTime = Date.now();
+                                Object.keys(players).forEach(id => {
+                                    const player = players[id];
+                                    if (currentTime - player.lastUpdate > 30000) {
+                                        const stalePlayerRef = ref(database, `players/${id}`);
+                                        set(stalePlayerRef, null); // 古いデータを削除
+                                    }
+                                });
+                                
                                 // 他のプレイヤーを表示
                                 Object.keys(players).forEach(id => {
                                     if (id !== state.playerId) {
@@ -872,6 +882,14 @@
                                             otherPlayers[id].destroy();
                                             delete otherPlayers[id];
                                         }
+                                    }
+                                });
+                            } else {
+                                // プレイヤーデータが空の場合、すべての他プレイヤーを削除
+                                Object.keys(otherPlayers).forEach(id => {
+                                    if (otherPlayers[id]) {
+                                        otherPlayers[id].destroy();
+                                        delete otherPlayers[id];
                                     }
                                 });
                             }
