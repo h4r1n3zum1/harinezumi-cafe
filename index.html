@@ -862,7 +862,7 @@
                                 const currentTime = Date.now();
                                 Object.keys(players).forEach(id => {
                                     const player = players[id];
-                                    if (currentTime - player.lastUpdate > 30000) {
+                                    if (currentTime - player.lastUpdate > 3600) {
                                         const stalePlayerRef = ref(database, `players/${id}`);
                                         set(stalePlayerRef, null); // 古いデータを削除
                                     }
