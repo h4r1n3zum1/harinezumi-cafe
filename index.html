@@ -711,29 +711,22 @@
                 }
                 
                 // ストライプ壁紙
-                const wallHeight = height - 150;
-                const stripeWidth = 30;
+                const stripeWidth = 30; // ストライプの幅
                 for (let x = 0; x < width; x += stripeWidth) {
                     const stripe = this.add.graphics();
+                    // 交互に色を変える
                     if ((x / stripeWidth) % 2 === 0) {
-                        stripe.fillStyle(0xF5DEB3);
+                        stripe.fillStyle(0xF5DEB3); // 薄いベージュ
                     } else {
-                        stripe.fillStyle(0xE6D3A3);
+                        stripe.fillStyle(0xE6D3A3); // 少し濃いベージュ
                     }
-                    stripe.fillRect(x, 0, stripeWidth, wallHeight);
+                    stripe.fillRect(x, 0, stripeWidth, height - 150);
                     stripe.setDepth(-95);
                 }
                 
-                // 中央に大きな窓を追加
-                this.createLargeWindow(width, wallHeight);
-                
                 // 本棚（左右）
-                this.createBookshelf(50, 50, 120, wallHeight - 100);
-                this.createBookshelf(width - 170, 50, 120, wallHeight - 100);
-                
-                // 大きな観賞植物を両サイドに配置
-                this.createLargePhilodendron(30, wallHeight - 50, 1.5);
-                this.createLargePhilodendron(width - 30, wallHeight - 50, 1.5);
+                this.createBookshelf(50, 50, 120, height - 250);
+                this.createBookshelf(width - 170, 50, 120, height - 250);
                 
                 // 中央の日付表示
                 const today = new Date();
@@ -745,7 +738,7 @@
                 });
                 
                 const dateX = width / 2;
-                const dateY = wallHeight - 60; // 窓の下に配置
+                const dateY = 80;
                 const datePoster = this.add.graphics();
                 datePoster.fillStyle(0x8B4513);
                 datePoster.fillRoundedRect(dateX - 100, dateY - 25, 200, 50, 15);
@@ -763,99 +756,6 @@
                 });
                 dateText.setOrigin(0.5);
                 dateText.setDepth(15);
-            };
-
-            // 大きな窓作成関数（中央に1つ）
-            Phaser.Scene.prototype.createLargeWindow = function(width, wallHeight) {
-                const windowWidth = 200;
-                const windowHeight = 150;
-                const windowX = (width - windowWidth) / 2;
-                const windowY = 30;
-                
-                // 窓枠（木目調のフレーム）
-                const windowFrame = this.add.graphics();
-                windowFrame.fillStyle(0x8B4513);
-                windowFrame.fillRect(windowX - 10, windowY - 10, windowWidth + 20, windowHeight + 20);
-                windowFrame.fillStyle(0xA0522D);
-                windowFrame.fillRect(windowX - 5, windowY - 5, windowWidth + 10, windowHeight + 10);
-                windowFrame.setDepth(-80);
-                
-                // 窓ガラス（空の色）
-                const windowGlass = this.add.graphics();
-                windowGlass.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xADD8E6, 0xADD8E6, 1);
-                windowGlass.fillRect(windowX, windowY, windowWidth, windowHeight);
-                windowGlass.setDepth(-85);
-                
-                // 雲（複数のふわふわした雲）
-                for (let i = 0; i < 4; i++) {
-                    const cloudX = windowX + 30 + i * 40;
-                    const cloudY = windowY + 20 + Math.random() * 40;
-                    const cloud = this.add.graphics();
-                    cloud.fillStyle(0xFFFFFF);
-                    cloud.fillCircle(cloudX, cloudY, 12);
-                    cloud.fillCircle(cloudX + 12, cloudY, 10);
-                    cloud.fillCircle(cloudX - 12, cloudY, 10);
-                    cloud.fillCircle(cloudX + 6, cloudY - 8, 8);
-                    cloud.fillCircle(cloudX - 6, cloudY - 8, 8);
-                    cloud.setDepth(-84);
-                }
-                
-                // 窓の十字枠（太めの木製フレーム）
-                const windowCross = this.add.graphics();
-                windowCross.fillStyle(0x8B4513);
-                windowCross.fillRect(windowX + windowWidth/2 - 4, windowY, 8, windowHeight);
-                windowCross.fillRect(windowX, windowY + windowHeight/2 - 4, windowWidth, 8);
-                windowCross.setDepth(-83);
-            };
-
-            // 大きなフィロデンドロン風観賞植物作成関数
-            Phaser.Scene.prototype.createLargePhilodendron = function(x, y, scale = 1.0) {
-                const plant = this.add.graphics();
-                
-                // 植木鉢（大きめの黒い鉢）
-                plant.fillStyle(0x2F2F2F);
-                plant.fillRect(x - 25 * scale, y - 15 * scale, 50 * scale, 30 * scale);
-                plant.fillStyle(0x1F1F1F);
-                plant.fillRect(x - 20 * scale, y - 12 * scale, 40 * scale, 24 * scale);
-                
-                // 土
-                plant.fillStyle(0x4A4A4A);
-                plant.fillRect(x - 18 * scale, y - 8 * scale, 36 * scale, 12 * scale);
-                
-                // 太い茎
-                plant.lineStyle(5 * scale, 0x228B22);
-                plant.moveTo(x, y - 8 * scale);
-                plant.lineTo(x, y - 80 * scale);
-                plant.strokePath();
-                
-                // 大きな葉っぱ（フィロデンドロン風）
-                const leafPositions = [
-                    { x: x - 30 * scale, y: y - 70 * scale },
-                    { x: x + 25 * scale, y: y - 65 * scale },
-                    { x: x - 20 * scale, y: y - 50 * scale },
-                    { x: x + 15 * scale, y: y - 45 * scale },
-                    { x: x, y: y - 85 * scale },
-                    { x: x - 10 * scale, y: y - 30 * scale },
-                    { x: x + 8 * scale, y: y - 25 * scale }
-                ];
-                
-                leafPositions.forEach(leaf => {
-                    // 大きな葉（フィロデンドロン風）
-                    plant.fillStyle(0x228B22);
-                    plant.fillEllipse(leaf.x, leaf.y, 25 * scale, 35 * scale);
-                    
-                    // 葉の内側（明るい緑）
-                    plant.fillStyle(0x32CD32);
-                    plant.fillEllipse(leaf.x, leaf.y, 20 * scale, 30 * scale);
-                    
-                    // 葉脈（簡略化）
-                    plant.lineStyle(1 * scale, 0x1F5F1F);
-                    plant.moveTo(leaf.x, leaf.y - 15 * scale);
-                    plant.lineTo(leaf.x, leaf.y + 15 * scale);
-                    plant.strokePath();
-                });
-                
-                plant.setDepth(20);
             };
             
             Phaser.Scene.prototype.createBookshelf = function(x, y, width, height) {
@@ -926,6 +826,7 @@
                         console.log('✅ Firebase connection successful');
                         state.isFirebaseReady = true;
                         
+                        // 接続成功後にUI更新
                         const userCountElement = document.getElementById('user-count');
                         if (userCountElement) {
                             userCountElement.textContent = '1';
@@ -934,41 +835,47 @@
                         console.error('❌ Firebase connection failed:', error);
                         state.isFirebaseReady = false;
                         
+                        // 接続失敗時はオフラインモード
                         const userCountElement = document.getElementById('user-count');
                         if (userCountElement) {
                             userCountElement.textContent = '1 (オフライン)';
                         }
                     });
                     
+                    // 切断時の処理
                     onDisconnect(playerRef).remove();
                     
-                    // プレイヤー監視
+                    // プレイヤー監視（リアルタイム更新）
                     onValue(playersRef, (snapshot) => {
                         try {
                             const players = snapshot.val();
                             const onlineCount = players ? Object.keys(players).length : 0;
                             
+                            // オンライン人数更新
                             const userCountElement = document.getElementById('user-count');
                             if (userCountElement) {
                                 userCountElement.textContent = onlineCount;
                             }
                             
                             if (players) {
+                                // 古いプレイヤーデータを自動削除（30秒以上更新がない場合）
                                 const currentTime = Date.now();
                                 Object.keys(players).forEach(id => {
                                     const player = players[id];
                                     if (currentTime - player.lastUpdate > 3600) {
                                         const stalePlayerRef = ref(database, `players/${id}`);
-                                        set(stalePlayerRef, null);
+                                        set(stalePlayerRef, null); // 古いデータを削除
                                     }
                                 });
                                 
+                                // 他のプレイヤーを表示
                                 Object.keys(players).forEach(id => {
                                     if (id !== state.playerId) {
                                         updateOtherPlayer.call(state.gameScene, id, players[id]);
                                     }
                                 });
                                 
+                                // 退室したプレイヤーを削除
                                 Object.keys(otherPlayers).forEach(id => {
                                     if (!players[id]) {
                                         if (otherPlayers[id]) {
@@ -978,6 +885,7 @@
                                     }
                                 });
                             } else {
+                                // プレイヤーデータが空の場合、すべての他プレイヤーを削除
                                 Object.keys(otherPlayers).forEach(id => {
                                     if (otherPlayers[id]) {
                                         otherPlayers[id].destroy();
@@ -988,6 +896,8 @@
                         } catch (error) {
                             console.warn('Players update error:', error);
                         }
+                    }, (error) => {
+                        console.error('Players listener error:', error);
                     });
                     
                     // メッセージ監視
@@ -1001,6 +911,7 @@
                                 
                                 displayMessages(sessionMessages);
                                 
+                                // 新しいメッセージの吹き出し表示
                                 const recentMessages = sessionMessages.filter(message => 
                                     Date.now() - message.timestamp < 5000 && 
                                     message.playerId !== state.playerId
@@ -1015,6 +926,8 @@
                         } catch (error) {
                             console.error('Messages listener error:', error);
                         }
+                    }, (error) => {
+                        console.error('Messages listener error:', error);
                     });
                     
                     // リアクション監視
@@ -1032,6 +945,8 @@
                         } catch (error) {
                             console.warn('Reactions listener error:', error);
                         }
+                    }, (error) => {
+                        console.error('Reactions listener error:', error);
                     });
                     
                 } catch (error) {
@@ -1048,6 +963,8 @@
                 
                 if (!otherPlayers[id]) {
                     const mugColorIndex = MUG_COLORS.findIndex(m => m.color === data.mugColor) || 0;
+                    
+                    // 他のプレイヤーも同じY座標（テーブル上）に配置
                     const safeX = Math.max(100, Math.min(gameWidth - 100, data.x));
                     
                     otherPlayers[id] = this.add.sprite(safeX, fixedPlayerY, `mug-${mugColorIndex}`);
@@ -1057,9 +974,10 @@
                     otherPlayers[id].userName = data.userName || 'ゲスト';
                     otherPlayers[id].playerId = id;
                 } else {
+                    // X座標のみ更新、Y座標は固定
                     const safeX = Math.max(100, Math.min(gameWidth - 100, data.x));
                     otherPlayers[id].x = safeX;
-                    otherPlayers[id].y = fixedPlayerY;
+                    otherPlayers[id].y = fixedPlayerY; // Y座標は常に固定
                     otherPlayers[id].userName = data.userName || 'ゲスト';
                 }
             }
@@ -1072,8 +990,10 @@
                 const tableY = gameHeight - 120;
                 const fixedPlayerY = tableY - 40;
                 
+                // Y座標を固定位置に維持
                 player.y = fixedPlayerY;
                 
+                // 左右移動のみ（元の仕様通り） + 画面外に出ないよう境界制限
                 if (cursors.left.isDown && player.x > 100) {
                     player.x = Math.max(100, player.x - speed);
                     moved = true;
@@ -1083,12 +1003,13 @@
                     moved = true;
                 }
                 
+                // プレイヤー位置をFirebaseに送信
                 if (moved && state.isFirebaseReady) {
                     try {
                         const playerRef = ref(database, `players/${state.playerId}`);
                         set(playerRef, {
                             x: player.x,
-                            y: player.y,
+                            y: player.y, // 固定Y座標を送信
                             mugColor: state.selectedMugColor,
                             deviceId: state.deviceId,
                             userName: state.userName,
@@ -1104,7 +1025,7 @@
             state.gameInstance = new Phaser.Game(config);
         }
 
-        // チャット機能
+        // チャット機能（Firebase版）
         function setupChat() {
             const chatInput = document.getElementById('chat-input');
             const reactionButtons = document.querySelector('.reaction-buttons');
@@ -1125,6 +1046,7 @@
                 const message = e.target.value.trim();
                 
                 if (message) {
+                    console.log('🔤 Enter pressed with message:', message);
                     sendMessage(message);
                     e.target.value = '';
                 }
@@ -1134,6 +1056,7 @@
         function handleReactionClick(e) {
             if (e.target.classList.contains('reaction-btn')) {
                 const reaction = e.target.getAttribute('data-reaction');
+                console.log('👆 Reaction button clicked:', reaction);
                 sendReaction(reaction);
             }
         }
@@ -1141,7 +1064,10 @@
         function sendMessage(text) {
             if (!text || !text.trim()) return;
             
+            console.log('💬 Attempting to send message:', text);
+            
             if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, using local display only');
                 showSpeechBubble(text);
                 return;
             }
@@ -1159,19 +1085,25 @@
                 };
                 
                 set(messageRef, messageData).then(() => {
+                    console.log('✅ Message sent successfully');
                     showSpeechBubble(text);
                 }).catch((error) => {
+                    console.error('❌ Message send failed:', error);
                     showSpeechBubble(text);
                 });
             } catch (error) {
+                console.error('❌ Send message error:', error);
                 showSpeechBubble(text);
             }
         }
         
         function sendReaction(emoji) {
+            console.log('😊 Attempting to send reaction:', emoji);
+            
             showLocalReactionAnimation(emoji);
             
             if (!state.isFirebaseReady) {
+                console.warn('❌ Firebase not ready, local reaction only');
                 return;
             }
             
@@ -1185,6 +1117,10 @@
                     emoji: emoji,
                     timestamp: Date.now(),
                     mugColor: state.selectedMugColor
+                }).then(() => {
+                    console.log('✅ Reaction sent successfully');
+                }).catch((error) => {
+                    console.error('❌ Reaction send failed:', error);
                 });
             } catch (error) {
                 console.warn('Send reaction error:', error);
@@ -1203,6 +1139,7 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
+                // 画面内に収まるように位置調整
                 const x = Math.max(10, Math.min(gameArea.clientWidth - 210, player.x - 85));
                 const y = Math.max(10, player.y - 100);
                 
@@ -1257,6 +1194,7 @@
             const player = scene.children.list.find(obj => obj.playerId === state.playerId);
             
             if (player) {
+                // 画面内に収まるように位置調整
                 const x = Math.max(20, Math.min(gameArea.clientWidth - 20, player.x - 12));
                 const y = Math.max(20, player.y - 70);
                 
@@ -1307,6 +1245,7 @@
             const scene = state.gameScene.sys.game.scene.scenes[0];
             let targetPlayer = null;
             
+            // 他のプレイヤーを探す
             Object.values(scene.children.list).forEach(obj => {
                 if (obj.playerId === messageData.playerId) {
                     targetPlayer = obj;
@@ -1314,6 +1253,7 @@
             });
             
             if (targetPlayer) {
+                // 画面内に収まるように位置調整
                 const x = Math.max(10, Math.min(gameArea.clientWidth - 210, targetPlayer.x - 85));
                 const y = Math.max(10, targetPlayer.y - 100);
                 
@@ -1321,6 +1261,7 @@
                 bubble.style.top = y + 'px';
                 bubble.followPlayer = targetPlayer;
             } else {
+                // プレイヤーが見つからない場合はランダム位置
                 bubble.style.left = (Math.random() * (gameArea.clientWidth - 200)) + 'px';
                 bubble.style.top = (gameArea.clientHeight - 300 + Math.random() * 100) + 'px';
             }
@@ -1367,6 +1308,7 @@
             const scene = state.gameScene.sys.game.scene.scenes[0];
             let targetPlayer = null;
             
+            // 他のプレイヤーを探す
             Object.values(scene.children.list).forEach(obj => {
                 if (obj.playerId === reactionData.playerId) {
                     targetPlayer = obj;
@@ -1374,6 +1316,7 @@
             });
             
             if (targetPlayer) {
+                // 画面内に収まるように位置調整
                 const x = Math.max(20, Math.min(gameArea.clientWidth - 20, targetPlayer.x - 12));
                 const y = Math.max(20, targetPlayer.y - 70);
                 
@@ -1381,6 +1324,7 @@
                 reaction.style.top = y + 'px';
                 reaction.followPlayer = targetPlayer;
             } else {
+                // プレイヤーが見つからない場合はランダム位置
                 reaction.style.left = (Math.random() * (gameArea.clientWidth - 50)) + 'px';
                 reaction.style.top = (gameArea.clientHeight - 200 + Math.random() * 50) + 'px';
             }
