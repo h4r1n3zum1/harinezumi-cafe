@@ -768,87 +768,109 @@
                 dateText.setDepth(15);
             };
 
-            // 窓作成関数
-            Phaser.Scene.prototype.createWindows = function(width, wallHeight) {
-                const windowCount = 3;
-                const windowWidth = 120;
-                const windowHeight = 100;
-                const windowSpacing = (width - windowWidth * windowCount) / (windowCount + 1);
+            // 大きな窓作成関数（中央に1つ）
+            Phaser.Scene.prototype.createLargeWindow = function(width, wallHeight) {
+                const windowWidth = 200;
+                const windowHeight = 150;
+                const windowX = (width - windowWidth) / 2;
+                const windowY = 30;
                 
-                for (let i = 0; i < windowCount; i++) {
-                    const windowX = windowSpacing + i * (windowWidth + windowSpacing);
-                    const windowY = 40;
-                    
-                    // 窓枠
-                    const windowFrame = this.add.graphics();
-                    windowFrame.fillStyle(0x8B4513);
-                    windowFrame.fillRect(windowX - 5, windowY - 5, windowWidth + 10, windowHeight + 10);
-                    windowFrame.setDepth(-80);
-                    
-                    // 窓ガラス（空の色）
-                    const windowGlass = this.add.graphics();
-                    windowGlass.fillStyle(0x87CEEB);
-                    windowGlass.fillRect(windowX, windowY, windowWidth, windowHeight);
-                    windowGlass.setDepth(-85);
-                    
-                    // 雲
-                    for (let j = 0; j < 3; j++) {
-                        const cloudX = windowX + 20 + j * 30;
-                        const cloudY = windowY + 15 + Math.random() * 20;
-                        const cloud = this.add.graphics();
-                        cloud.fillStyle(0xFFFFFF);
-                        cloud.fillCircle(cloudX, cloudY, 8);
-                        cloud.fillCircle(cloudX + 8, cloudY, 6);
-                        cloud.fillCircle(cloudX - 8, cloudY, 6);
-                        cloud.setDepth(-84);
-                    }
-                    
-                    // 窓の十字枠
-                    const windowCross = this.add.graphics();
-                    windowCross.lineStyle(3, 0x8B4513);
-                    windowCross.moveTo(windowX + windowWidth/2, windowY);
-                    windowCross.lineTo(windowX + windowWidth/2, windowY + windowHeight);
-                    windowCross.moveTo(windowX, windowY + windowHeight/2);
-                    windowCross.lineTo(windowX + windowWidth, windowY + windowHeight/2);
-                    windowCross.strokePath();
-                    windowCross.setDepth(-83);
+                // 窓枠（木目調のフレーム）
+                const windowFrame = this.add.graphics();
+                windowFrame.fillStyle(0x8B4513);
+                windowFrame.fillRect(windowX - 10, windowY - 10, windowWidth + 20, windowHeight + 20);
+                windowFrame.fillStyle(0xA0522D);
+                windowFrame.fillRect(windowX - 5, windowY - 5, windowWidth + 10, windowHeight + 10);
+                windowFrame.setDepth(-80);
+                
+                // 窓ガラス（空の色）
+                const windowGlass = this.add.graphics();
+                windowGlass.fillGradientStyle(0x87CEEB, 0x87CEEB, 0xADD8E6, 0xADD8E6, 1);
+                windowGlass.fillRect(windowX, windowY, windowWidth, windowHeight);
+                windowGlass.setDepth(-85);
+                
+                // 雲（複数のふわふわした雲）
+                for (let i = 0; i < 4; i++) {
+                    const cloudX = windowX + 30 + i * 40;
+                    const cloudY = windowY + 20 + Math.random() * 40;
+                    const cloud = this.add.graphics();
+                    cloud.fillStyle(0xFFFFFF);
+                    cloud.fillCircle(cloudX, cloudY, 12);
+                    cloud.fillCircle(cloudX + 12, cloudY, 10);
+                    cloud.fillCircle(cloudX - 12, cloudY, 10);
+                    cloud.fillCircle(cloudX + 6, cloudY - 8, 8);
+                    cloud.fillCircle(cloudX - 6, cloudY - 8, 8);
+                    cloud.setDepth(-84);
                 }
+                
+                // 窓の十字枠（太めの木製フレーム）
+                const windowCross = this.add.graphics();
+                windowCross.fillStyle(0x8B4513);
+                // 縦枠
+                windowCross.fillRect(windowX + windowWidth/2 - 4, windowY, 8, windowHeight);
+                // 横枠
+                windowCross.fillRect(windowX, windowY + windowHeight/2 - 4, windowWidth, 8);
+                windowCross.setDepth(-83);
             };
 
-            // 観賞植物作成関数
-            Phaser.Scene.prototype.createPlant = function(x, y, scale = 1.0) {
+            // 大きなフィロデンドロン風観賞植物作成関数
+            Phaser.Scene.prototype.createLargePhilodendron = function(x, y, scale = 1.0) {
                 const plant = this.add.graphics();
                 
-                // 植木鉢
-                plant.fillStyle(0x8B4513);
-                plant.fillRect(x - 15 * scale, y - 10 * scale, 30 * scale, 20 * scale);
-                plant.fillStyle(0x654321);
-                plant.fillRect(x - 12 * scale, y - 8 * scale, 24 * scale, 16 * scale);
+                // 植木鉢（大きめの黒い鉢）
+                plant.fillStyle(0x2F2F2F);
+                plant.fillRect(x - 25 * scale, y - 15 * scale, 50 * scale, 30 * scale);
+                plant.fillStyle(0x1F1F1F);
+                plant.fillRect(x - 20 * scale, y - 12 * scale, 40 * scale, 24 * scale);
                 
                 // 土
                 plant.fillStyle(0x4A4A4A);
-                plant.fillRect(x - 10 * scale, y - 5 * scale, 20 * scale, 8 * scale);
+                plant.fillRect(x - 18 * scale, y - 8 * scale, 36 * scale, 12 * scale);
                 
-                // 茎
-                plant.lineStyle(3 * scale, 0x228B22);
-                plant.moveTo(x, y - 5 * scale);
-                plant.lineTo(x, y - 40 * scale);
+                // 太い茎
+                plant.lineStyle(5 * scale, 0x228B22);
+                plant.moveTo(x, y - 8 * scale);
+                plant.lineTo(x, y - 80 * scale);
                 plant.strokePath();
                 
-                // 葉っぱ（複数）
+                // 大きな葉っぱ（フィロデンドロン風の切れ込みのある葉）
                 const leafPositions = [
-                    { x: x - 8 * scale, y: y - 35 * scale },
-                    { x: x + 8 * scale, y: y - 30 * scale },
-                    { x: x - 5 * scale, y: y - 25 * scale },
-                    { x: x + 5 * scale, y: y - 20 * scale },
-                    { x: x, y: y - 40 * scale }
+                    { x: x - 30 * scale, y: y - 70 * scale, angle: -0.3 },
+                    { x: x + 25 * scale, y: y - 65 * scale, angle: 0.2 },
+                    { x: x - 20 * scale, y: y - 50 * scale, angle: -0.1 },
+                    { x: x + 15 * scale, y: y - 45 * scale, angle: 0.1 },
+                    { x: x, y: y - 85 * scale, angle: 0 },
+                    { x: x - 10 * scale, y: y - 30 * scale, angle: -0.2 },
+                    { x: x + 8 * scale, y: y - 25 * scale, angle: 0.15 }
                 ];
                 
                 leafPositions.forEach(leaf => {
-                    plant.fillStyle(0x32CD32);
-                    plant.fillEllipse(leaf.x, leaf.y, 8 * scale, 12 * scale);
+                    // 大きな葉（フィロデンドロン風）
                     plant.fillStyle(0x228B22);
-                    plant.fillEllipse(leaf.x, leaf.y, 6 * scale, 10 * scale);
+                    
+                    // 楕円の葉の基本形
+                    plant.save();
+                    plant.translate(leaf.x, leaf.y);
+                    plant.rotate(leaf.angle);
+                    
+                    // 大きな楕円の葉
+                    plant.fillEllipse(0, 0, 25 * scale, 35 * scale);
+                    
+                    // 葉の切れ込み（フィロデンドロン特有）
+                    plant.fillStyle(0x32CD32);
+                    plant.fillEllipse(0, 0, 20 * scale, 30 * scale);
+                    
+                    // 葉脈
+                    plant.lineStyle(1 * scale, 0x1F5F1F);
+                    plant.moveTo(0, -15 * scale);
+                    plant.lineTo(0, 15 * scale);
+                    plant.moveTo(-8 * scale, -8 * scale);
+                    plant.lineTo(8 * scale, 8 * scale);
+                    plant.moveTo(8 * scale, -8 * scale);
+                    plant.lineTo(-8 * scale, 8 * scale);
+                    plant.strokePath();
+                    
+                    plant.restore();
                 });
                 
                 plant.setDepth(20);
