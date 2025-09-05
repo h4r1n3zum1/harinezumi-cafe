@@ -693,7 +693,6 @@
                 setupFirebaseConnection();
             }
 
-            // カフェ背景作成（植物と窓追加版）
             Phaser.Scene.prototype.createCafeBackground = function(width, height) {
                 // シンプルな背景
                 const bg = this.add.graphics();
@@ -711,7 +710,7 @@
                     floorPlank.setDepth(-90);
                 }
                 
-                // ストライプ壁紙（上半分）
+                // ストライプ壁紙
                 const wallHeight = height - 150;
                 const stripeWidth = 30;
                 for (let x = 0; x < width; x += stripeWidth) {
@@ -725,18 +724,16 @@
                     stripe.setDepth(-95);
                 }
                 
-                // 窓を追加（複数の窓）
-                this.createWindows(width, wallHeight);
+                // 中央に大きな窓を追加
+                this.createLargeWindow(width, wallHeight);
                 
                 // 本棚（左右）
                 this.createBookshelf(50, 50, 120, wallHeight - 100);
                 this.createBookshelf(width - 170, 50, 120, wallHeight - 100);
                 
-                // 観賞植物を本棚の前に配置
-                this.createPlant(40, wallHeight - 100, 1.2);
-                this.createPlant(180, wallHeight - 130, 0.8);
-                this.createPlant(width - 180, wallHeight - 110, 1.0);
-                this.createPlant(width - 40, wallHeight - 125, 0.9);
+                // 大きな観賞植物を両サイドに配置
+                this.createLargePhilodendron(30, wallHeight - 50, 1.5);
+                this.createLargePhilodendron(width - 30, wallHeight - 50, 1.5);
                 
                 // 中央の日付表示
                 const today = new Date();
@@ -748,7 +745,7 @@
                 });
                 
                 const dateX = width / 2;
-                const dateY = 80;
+                const dateY = wallHeight - 60; // 窓の下に配置
                 const datePoster = this.add.graphics();
                 datePoster.fillStyle(0x8B4513);
                 datePoster.fillRoundedRect(dateX - 100, dateY - 25, 200, 50, 15);
@@ -806,9 +803,7 @@
                 // 窓の十字枠（太めの木製フレーム）
                 const windowCross = this.add.graphics();
                 windowCross.fillStyle(0x8B4513);
-                // 縦枠
                 windowCross.fillRect(windowX + windowWidth/2 - 4, windowY, 8, windowHeight);
-                // 横枠
                 windowCross.fillRect(windowX, windowY + windowHeight/2 - 4, windowWidth, 8);
                 windowCross.setDepth(-83);
             };
