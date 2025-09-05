@@ -833,44 +833,31 @@
                 plant.lineTo(x, y - 80 * scale);
                 plant.strokePath();
                 
-                // 大きな葉っぱ（フィロデンドロン風の切れ込みのある葉）
+                // 大きな葉っぱ（フィロデンドロン風）
                 const leafPositions = [
-                    { x: x - 30 * scale, y: y - 70 * scale, angle: -0.3 },
-                    { x: x + 25 * scale, y: y - 65 * scale, angle: 0.2 },
-                    { x: x - 20 * scale, y: y - 50 * scale, angle: -0.1 },
-                    { x: x + 15 * scale, y: y - 45 * scale, angle: 0.1 },
-                    { x: x, y: y - 85 * scale, angle: 0 },
-                    { x: x - 10 * scale, y: y - 30 * scale, angle: -0.2 },
-                    { x: x + 8 * scale, y: y - 25 * scale, angle: 0.15 }
+                    { x: x - 30 * scale, y: y - 70 * scale },
+                    { x: x + 25 * scale, y: y - 65 * scale },
+                    { x: x - 20 * scale, y: y - 50 * scale },
+                    { x: x + 15 * scale, y: y - 45 * scale },
+                    { x: x, y: y - 85 * scale },
+                    { x: x - 10 * scale, y: y - 30 * scale },
+                    { x: x + 8 * scale, y: y - 25 * scale }
                 ];
                 
                 leafPositions.forEach(leaf => {
                     // 大きな葉（フィロデンドロン風）
                     plant.fillStyle(0x228B22);
+                    plant.fillEllipse(leaf.x, leaf.y, 25 * scale, 35 * scale);
                     
-                    // 楕円の葉の基本形
-                    plant.save();
-                    plant.translate(leaf.x, leaf.y);
-                    plant.rotate(leaf.angle);
-                    
-                    // 大きな楕円の葉
-                    plant.fillEllipse(0, 0, 25 * scale, 35 * scale);
-                    
-                    // 葉の切れ込み（フィロデンドロン特有）
+                    // 葉の内側（明るい緑）
                     plant.fillStyle(0x32CD32);
-                    plant.fillEllipse(0, 0, 20 * scale, 30 * scale);
+                    plant.fillEllipse(leaf.x, leaf.y, 20 * scale, 30 * scale);
                     
-                    // 葉脈
+                    // 葉脈（簡略化）
                     plant.lineStyle(1 * scale, 0x1F5F1F);
-                    plant.moveTo(0, -15 * scale);
-                    plant.lineTo(0, 15 * scale);
-                    plant.moveTo(-8 * scale, -8 * scale);
-                    plant.lineTo(8 * scale, 8 * scale);
-                    plant.moveTo(8 * scale, -8 * scale);
-                    plant.lineTo(-8 * scale, 8 * scale);
+                    plant.moveTo(leaf.x, leaf.y - 15 * scale);
+                    plant.lineTo(leaf.x, leaf.y + 15 * scale);
                     plant.strokePath();
-                    
-                    plant.restore();
                 });
                 
                 plant.setDepth(20);
